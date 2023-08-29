@@ -1,0 +1,49 @@
+
+fmod NEEDED-SORT is
+  inc INT .
+  inc FLOAT .
+  sort Agent .
+
+endfm 
+
+
+view Agent from TRIV to NEEDED-SORT is
+  sort Elt to Agent .
+endv
+
+fmod PAIR-SET is
+  protecting SET{Nat} * (sort NeSet{Nat} to NeNatSet,
+                             sort Set{Nat} to NatSet) .
+  protecting LIST{Agent} * (sort NeList{Agent} to NeAgentList,
+                            sort List{Agent} to AgentList) .
+endfm
+
+
+mod AXELROD-MODEL is 
+pr MAP{Nat, Set{Nat}} .
+pr SET{Agent} .
+
+op ag : MAP{Nat, Set{Nat}} -> Agent [ctor] .
+op AgentList : -> Set{Agent}.
+op sametreat : Agent Agent -> Set{Agent}. 
+
+ 
+var AL : Set{Agent} .
+vars A A' : Agent .
+vars I J k: Nat .
+var V V' : MAP{Nat, Set{Nat}} .
+
+eq AgentList = ag((0|-> 1),(1|->2),(2|->3),(3|->4)),
+		ag((0|-> 2),(1|->1),(2|->1),(3|->5)),
+		ag((0|-> 3),(1|->5),(2|->2),(3|->2)),
+		ag((0|-> 4),(1|->3),(2|->3),(3|->1)),
+		ag((0|-> 1),(1|->2),(2|->4),(3|->4)),
+		ag((0|-> 5),(1|->4),(2|->5),(3|->3))
+
+eq sametreat(ag((I|-> J),(V)), ag((I|-> K),(V')), AL) =  ag((I|-> K),(V)), ag((I|-> K),(V')), AL
+
+rl [interaction] : A,A', AL =>  same_treat(A, A'), AL .
+
+
+endm
+
