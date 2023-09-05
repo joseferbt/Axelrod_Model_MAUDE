@@ -1,49 +1,98 @@
 
 fmod NEEDED-SORT is
+pr MAP{Nat, Nat}.
+pr SET{Nat} .
+  inc NAT .
   inc INT .
   inc FLOAT .
   sort Agent .
+  sort Graph .
+  sort Edge .
+  subsort Edge < Graph .
 
+op ed : Nat Set{Nat} -> Edge [ctor].
+op empty : -> Graph [ctor].
+op _, _ : Graph Graph -> Graph [ctor assoc comm id: empty prec 121 format (d r os d)] .
+
+op ag : Nat Map{Nat, Nat} -> Agent [ctor] .
+
+var G : Graph .
+
+eq G = ed(0, (1, 2, 3 )), ed(1, ( 0, 2 )), ed(2, (3, 1)), ed(3, (0, 2)) .
+
+ 
 endfm 
+
+
 
 
 view Agent from TRIV to NEEDED-SORT is
   sort Elt to Agent .
 endv
 
-fmod PAIR-SET is
-  protecting SET{Nat} * (sort NeSet{Nat} to NeNatSet,
-                             sort Set{Nat} to NatSet) .
-  protecting LIST{Agent} * (sort NeList{Agent} to NeAgentList,
-                            sort List{Agent} to AgentList) .
-endfm
+view Graph from TRIV to NEEDED-SORT is
+  sort Elt to Graph .
+endv
+
+
+
 
 
 mod AXELROD-MODEL is 
-pr MAP{Nat, Set{Nat}} .
+
 pr SET{Agent} .
 
-op ag : MAP{Nat, Set{Nat}} -> Agent [ctor] .
-op AgentList : -> Set{Agent}.
-op sametreat : Agent Agent -> Set{Agent}. 
+sort State .
 
- 
+
+op < _, _, _,> : Graph Set{Agent} Nat -> State .
+
+op a : -> Nat .
+
+ops AgentList sol : -> Set{Agent} .
+op sametreat : Agent Agent -> Set{Agent} .
+op threshold : Nat Nat -> Bool .
+op selectA1 : Graph Set{Agent} -> Agent .
+
+
 var AL : Set{Agent} .
 vars A A' : Agent .
-vars I J k: Nat .
-var V V' : MAP{Nat, Set{Nat}} .
+vars I J K L M : Nat .
+var V V' : Map{Nat, Nat} .
+var NET : Graph .
 
-eq AgentList = ag((0|-> 1),(1|->2),(2|->3),(3|->4)),
-		ag((0|-> 2),(1|->1),(2|->1),(3|->5)),
-		ag((0|-> 3),(1|->5),(2|->2),(3|->2)),
-		ag((0|-> 4),(1|->3),(2|->3),(3|->1)),
-		ag((0|-> 1),(1|->2),(2|->4),(3|->4)),
-		ag((0|-> 5),(1|->4),(2|->5),(3|->3))
+--- eq NET = 0 (1 2 3) 1 ()
 
-eq sametreat(ag((I|-> J),(V)), ag((I|-> K),(V')), AL) =  ag((I|-> K),(V)), ag((I|-> K),(V')), AL
 
-rl [interaction] : A,A', AL =>  same_treat(A, A'), AL .
+
+eq a = 1 .
+
+eq threshold(J, K ) = if abs(J - K) <= a then true else false fi .
+
+ceq sametreat(ag(I, ((K |-> L), (V))), ag(J, ((K |-> M), (V')))) =  ag(I, ((K |-> M), (V))), ag(J, ((K |-> M), (V'))) if threshold(L, M) .
+
+rl [interaction] : A, A', AL =>  sametreat(A, A'), AL .
 
 
 endm
+
+---(
+
+
+ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1))
+ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 4, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1))
+
+
+
+ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)),  
+ag(1, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4))
+ ag((0 |-> 3, 1 |-> 1, 2 |-> 2, 3 |-> 3)), ag((0 |-> 3, 1 |-> 3, 2 |-> 4, 3 |-> 1)),
+ ag((0 |-> 3, 1 |-> 3, 2 |-> 4, 3 |-> 1)), ag((0 |-> 3, 1 |-> 4, 2 |-> 1, 3 |-> 2))
+ ag((0 |-> 3, 1 |-> 4, 2 |-> 1,3 |-> 2))   ag((0 |-> 4, 1 |-> 2, 2 |-> 2, 3 |-> 3))
+ 
+    ,  , 
+
+
+
+)
 
