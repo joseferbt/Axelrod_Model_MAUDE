@@ -1,19 +1,19 @@
 fmod NEEDED-SORT is
-pr MAP{Nat, Nat}.
-pr SET{Nat} .
-  inc NAT .
-  inc INT .
-  inc FLOAT .
-  sort Agent .
-  sort Graph .
-  sort Edge .
-  subsort Edge < Graph .
+	pr MAP{Nat, Nat}.
+	pr SET{Nat} .
+	inc NAT .
+  	inc INT .
+  	inc FLOAT .
+	sort Agent .
+  	sort Graph .
+  	sort Edge .
+  	subsort Edge < Graph .
 
-op ed : Nat Set{Nat} -> Edge [ctor].
-op empty : -> Graph [ctor].
-op _, _ : Graph Graph -> Graph [ctor assoc comm id: empty prec 121 format (d r os d)] .
+	op ed : Nat Set{Nat} -> Edge [ctor].
+	op empty : -> Graph [ctor].
+	op _, _ : Graph Graph -> Graph [ctor assoc comm id: empty prec 121 format (d r os d)] .
 
-op ag : Nat Map{Nat, Nat} -> Agent [ctor] .
+	op ag : Nat Map{Nat, Nat} -> Agent [ctor] .
  
 endfm 
 
@@ -24,78 +24,65 @@ view Graph from TRIV to NEEDED-SORT is
   sort Elt to Graph .
 endv
 
-mod AXELROD-MODEL is 
+mod MODELO is 
 	pr SET{Agent} .
 
 	sort State .
-	
-	vars G NET G' : Graph .
-	var AL LA LA': Set{Agent} .
-	vars A A' : Agent .
-	vars I J K L M : Nat .
-	var V V' : Map{Nat, Nat} .
-	var T : Set{Nat} .
 
 	op a : -> Nat .
 	eq a = 1 .
 	
-	op < _, _, _,> : Graph Set{Agent} Nat -> State .
-	
+	op AL : -> Set{Agent} .
+	eq AL = ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3)), ag(3, (0 |-> 4, 1 |-> 1, 2 |-> 2, 3 |-> 2)) .
+
+	op GRAFO : -> Graph .	
+	eq GRAFO = ed(0, (1, 2, 3 )), ed(1, ( 0, 2 )), ed(2, (3, 1)), ed(3, (0, 2)) .
+	op < _, _, _ > : Graph Set{Agent} Nat -> State .
 
 	ops AgentList sol : -> Set{Agent} .
 	
 	op sametreat : Agent Agent -> Set{Agent} .
 	
 	op threshold : Nat Nat -> Bool .
-	
-	op selectA1 : Graph Set{Agent} -> Agent .
-	
-	op selectA2 : Set{Agent} Nat -> Agent .
-	
+		
 	op idAgent : Agent -> Nat .
-	eq idAgent(ag(I, V)) = I .
-	
+	op selectNeighbor : Set{Nat} -> Nat .
+	op update : Graph Set{Agent} -> Set{Agent} .
+	op pickAgent : Set{Agent} -> Agent .
+	op getNeighbors : Graph Nat -> Set{Nat} .
 	op getAgent : Set{Agent} Nat -> Agent .
-	eq getAgent((A, LA), J) = if idAgent(A) == J then A else getAgent(LA, J) fi .
-
-	eq G = ed(0, (1, 2, 3 )), ed(1, ( 0, 2 )), ed(2, (3, 1)), ed(3, (0, 2)) .
-
-	eq AL = ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3)), ag(3, (0 |-> 4, 1 |-> 1, 2 |-> 2, 3 |-> 2)) .
+	op inlist : Set{Agent} Nat -> Bool .
 
 	
 
+	vars G NET G' : Graph .
+	vars LA LA' : Set{Agent} .
+	vars A A' : Agent .
+	vars I J K L M N : Nat .
+	var V V' : Map{Nat, Nat} .
+	var T : Set{Nat} .
 
+	eq inlist((LA, ag(I, V)), I) = true .
+	eq inlist(LA, I) = false [owise] .
+	eq idAgent(ag(I, V)) = I .
+	eq threshold(I, J) = if abs(J - I) <= a then true else false fi .
+---	eq changeTreat(A, A') = 
+---	eq availableTreat(ag(I, (J |-> k, V)), (ag(L, (J |-> N, V')))) = J,  
 
-	eq threshold(J, K ) = if abs(J - K) <= a then true else false fi .
-
-	ceq sametreat(ag(I, ((K |-> L), (V))), ag(J, ((K |-> M), (V')))) =  ag(I, ((K |-> M), (V))), ag(J, ((K |-> M), (V'))) if threshold(L, M) .
-
-	rl [interaction] : A, A', LA =>  sametreat(A, A'), LA .
-
-
+	eq getAgent((ag(I, V), LA), I) = ag(I,V)  .
+	eq getNeighbors((ed(I, T), G), I) = T .
+	eq selectNeighbor((N, T)) = N .
+	eq pickAgent((A, LA )) = A .
+---	eq update(G, LA) = 
+	
+	
+	
+	--- rl [iter] : < G, LA, N >  => <> .
+	 
 endm
-
+	
+	
 ---(
-
-
-ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1))
-ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 4, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1))
-
-
+red getAgent((ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 1, 1 |-> 3, 2 |-> 4, 3 |-> 1))), 1) .
 )
 
-fmod TEST is
-pr MAP{Nat, Nat} .
-
-sort Agente .
-
-op ag : Nat Map{Nat, Nat} -> Agente [ctor] .
-
-op idAgente : Agente -> Nat .
-
-var I : Nat .
-var V : Map{Nat, Nat} .
-
-eq idAgente(ag(I, V)) = I .
-
-endfm
