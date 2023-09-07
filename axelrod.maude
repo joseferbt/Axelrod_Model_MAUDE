@@ -36,7 +36,7 @@ mod MODELO is
 	eq AL = ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3)), ag(3, (0 |-> 4, 1 |-> 1, 2 |-> 2, 3 |-> 2)) .
 
 	op GRAFO : -> Graph .	
-	eq GRAFO = ed(0, (1, 2, 3 )), ed(1, ( 0, 2 )), ed(2, (3, 1)), ed(3, (0, 2)) .
+	eq GRAFO = ed(0, ( 2, 3 )), ed(1, ( 0, 2 )), ed(2, (3, 1)), ed(3, (0, 2)) .
 	op < _, _, _ > : Graph Set{Agent} Nat -> State .
 
 	ops AgentList sol : -> Set{Agent} .
@@ -46,14 +46,16 @@ mod MODELO is
 	op threshold : Nat Nat -> Bool .
 		
 	op idAgent : Agent -> Nat .
-	op selectNeighbor : Set{Nat} -> Nat .
+	op selectN : Set{Nat} -> Nat .
 	op update : Graph Set{Agent} -> Set{Agent} .
 	op pickAgent : Set{Agent} -> Agent .
 	op getNeighbors : Graph Nat -> Set{Nat} .
 	op getAgent : Set{Agent} Nat -> Agent .
 	op inlist : Set{Agent} Nat -> Bool .
-
-	
+	op availableTreat : Agent Agent -> Set{Nat} .
+	op auxTreats : Agent Agent -> Agent .
+	op changeTreat : Agent Agent Nat -> Agent .
+		
 
 	vars G NET G' : Graph .
 	vars LA LA' : Set{Agent} .
@@ -66,23 +68,31 @@ mod MODELO is
 	eq inlist(LA, I) = false [owise] .
 	eq idAgent(ag(I, V)) = I .
 	eq threshold(I, J) = if abs(J - I) <= a then true else false fi .
----	eq changeTreat(A, A') = 
----	eq availableTreat(ag(I, (J |-> k, V)), (ag(L, (J |-> N, V')))) = J,  
+	eq changeTreat(ag(I, (N |-> M, V')), ag(J, (N |-> K, V)), N) = ag(I, (N |-> K, V')) . 
+
+	eq availableTreat(ag(I, (J |-> K, V)), (ag(L, (J |-> N, V')))) = if threshold(K, N) then J, availableTreat(ag(I, V), ag(L, V')) else  availableTreat(ag(I, V), ag(L, V')) fi .
+	
+	eq availableTreat(ag(I, empty), ag(J, empty)) = empty .
 
 	eq getAgent((ag(I, V), LA), I) = ag(I,V)  .
 	eq getNeighbors((ed(I, T), G), I) = T .
-	eq selectNeighbor((N, T)) = N .
+	eq selectN((N, T)) = N .
 	eq pickAgent((A, LA )) = A .
----	eq update(G, LA) = 
+	eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectN(getNeighbors(G, I)))) .
+	eq auxTreats(A, A') = changeTreat(A, A', selectN(availableTreat(A, A'))).
 	
 	
-	
-	--- rl [iter] : < G, LA, N >  => <> .
+ crl [iter] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
 	 
 endm
 	
 	
 ---(
 red getAgent((ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 1, 1 |-> 3, 2 |-> 4, 3 |-> 1))), 1) .
+red changeTreat(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), 
+		ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), 3) .
+red auxTreats(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1))) .
+
+rew < GRAFO, AL, 2> .
 )
 
