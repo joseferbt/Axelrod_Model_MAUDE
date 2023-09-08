@@ -1,0 +1,18 @@
+mod LIBRARY-PETRI-NET is
+sorts Place Marking .
+subsort Place < Marking .
+op 1 : -> Marking [ctor] .
+op __ : Marking Marking -> Marking [ctor assoc comm id: 1] .
+ops a b n r j : -> Place [ctor] .
+
+var M : Marking .
+
+rl [buy] : r r r r => j j j j j j j j .
+rl [file] : j => a .
+rl [borr] : a => b .
+rl [ret] : b => a .
+rl [lose] : b => n .
+rl [disc] : a => n .
+rl [req1] : n n => r r .
+rl [req2] : M => M r .
+endm

@@ -1,0 +1,20 @@
+fmod BASIC-NAT-MSET is
+protecting BASIC-NAT .
+protecting BOOL .
+sort Mset .
+subsorts Nat < Mset .
+op empty-mset : -> Mset [ctor] .
+op __ : Mset Mset -> Mset [ctor assoc comm id: empty-mset] .
+op size : Mset -> Nat .
+op mult : Nat Mset -> Nat .
+op _in_ : Nat Mset -> Bool .
+vars N N' : Nat .
+var S : Mset .
+eq size(empty-mset) = 0 .
+eq size(N S) = s size(S) .
+eq mult(N, empty-mset) = 0 .
+eq mult(N, N S) = s mult(N, S) .
+ceq mult(N, N' S) = mult(N, S) if N =/= N' .
+eq N in N S = true .
+eq N in S = false [owise] .
+endfm

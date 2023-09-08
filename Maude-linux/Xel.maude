@@ -1,0 +1,68 @@
+fmod NEEDED-SORT is
+	pr MAP{Nat, Nat}.
+	pr SET{Nat} .
+	inc NAT .
+  	inc INT .
+  	inc FLOAT .
+	sort Agent .
+  	sort Graph .
+  	sort Edge .
+  	subsort Edge < Graph .
+
+	op ed : Nat Set{Nat} -> Edge [ctor].
+	op empty : -> Graph [ctor].
+	op _, _ : Graph Graph -> Graph [ctor assoc comm id: empty prec 121 format (d r os d)] .
+
+	op ag : Nat Map{Nat, Nat} -> Agent [ctor] .
+ 
+endfm 
+
+view Agent from TRIV to NEEDED-SORT is
+  sort Elt to Agent .
+endv
+view Graph from TRIV to NEEDED-SORT is
+  sort Elt to Graph .
+endv
+
+mod VA is 
+	pr SET{Agent} .
+
+	sort State .
+
+	op A : -> Nat .
+	eq A = 1 .
+
+	op < _, _, _ > : Graph Set{Agent} Nat -> State .
+	ops AgentList sol : -> Set{Agent} .
+	
+	op sametreat : Agent Agent -> Set{Agent} .
+	
+	op threshold : Nat Nat -> Bool .	
+	
+	op idAgent : Agent -> Nat .
+	
+
+
+	vars G NET G' : Graph .
+	var AL LA LA': Set{Agent} .
+	vars A A' : Agent .
+	vars I J K L M N : Nat .
+	var V V' : Map{Nat, Nat} .
+	var T : Set{Nat} .
+
+	eq AL = ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3)), ag(3, (0 |-> 4, 1 |-> 1, 2 |-> 2, 3 |-> 2)) .
+	
+	eq idAgent(ag(I, V)) = I .
+	eq threshold(I, J) = if abs(J - I) <= A then true else false fi .
+---	eq selectA1((ed(I, T), G), (A, LA)) = if idAgent(A) == I then 
+---	eq getAgent((A, LA), I) = if idAgent(A) == I then A else getAgent(LA, I) fi .
+	
+endm
+
+
+---(
+red idAgent(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4))) .
+red threshold(5, 4) .
+red sametreat(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 3))) .
+red getAgent((ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1))), 0) .
+)

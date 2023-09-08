@@ -1,0 +1,137 @@
+
+fmod PAIR-SORT is
+  inc INT .
+  inc FLOAT .
+  sort DisTriple DisPair AdjPair Agent .
+  op (_,_) : Nat Float -> AdjPair .
+  op (_,_,_) : Float Float Nat -> DisTriple .
+  op (_,_) : Float Nat -> DisPair .
+endfm
+
+view AdjPair from TRIV to PAIR-SORT is
+  sort Elt to AdjPair .
+endv
+
+view DisTriple from TRIV to PAIR-SORT is
+  sort Elt to DisTriple .
+endv
+
+view DisPair from TRIV to PAIR-SORT is
+  sort Elt to DisPair .
+endv
+
+view Agent from TRIV to PAIR-SORT is
+  sort Elt to Agent .
+endv
+
+fmod PAIR-SET is
+  protecting SET{AdjPair} * (sort NeSet{AdjPair} to NeAdjPairSet,
+                             sort Set{AdjPair} to AdjPairSet) .
+  --- protecting SET{DisTriple} * (sort NeSet{DisTriple} to NeDisTripleSet,
+  ---                           sort Set{DisTriple} to DisTripleSet) .
+  protecting LIST{Agent} * (sort NeList{Agent} to NeAgentList,
+                            sort List{Agent} to AgentList) .
+endfm
+
+fmod DATA is
+  pr MAP{Nat, Set{AdjPair}} .
+
+  ops G G2 G3 G4 G5 G6 : -> Map{Nat, Set{AdjPair}} .
+  op K : -> Float .
+  op alpha : -> Float .
+
+  eq G = (0 |-> ((5, 1.0), (0, 1.0))), (1 |-> ((0, 0.6), (1, 1.0))), (2 |-> ((0, 0.4), (3, 0.2), (2, 1.0))),
+         (3 |-> ((1, 0.6), (3, 1.0))), (4 |-> ((2, 0.6), (4, 1.0))), (5 |-> ((3, 0.4), (4, 0.6), (5, 1.0))) .
+  eq G2 = (0 |-> ((5, 1.0), (1, 0.6), (2, 0.4))), (1 |-> ((0, 0.6), (3, 0.6))),
+          (2 |-> ((0, 0.4), (3, 0.2), (4, 0.6))), (3 |-> ((1, 0.6), (2, 0.2), (5, 0.4))),
+	  (4 |-> ((2, 0.6), (5, 0.6))), (5 |-> ((3, 0.4), (4, 0.6), (0, 1.0))) .
+  eq G3 = (0 |-> ((5, 1.0), (1, 0.6))), (1 |-> empty), (2 |-> ((0, 0.4), (3, 0.2), (4, 0.6))),
+          (3 |-> (1, 0.6)), (4 |-> empty), (5 |-> ((3, 0.4), (4, 0.6))) .
+  eq G4 = (0 |-> ((1, 1.0), (0, 1.0), (2, 1.0))), (1 |-> ((0, 1.0), (1, 1.0), (2, 1.0))),
+         (2 |-> ((0, 1.0), (1, 1.0), (2, 1.0))) .
+  eq G5 = (0 |-> ((5, 1.0), (0, 1.0))), (1 |-> ((0, 0.6), (1, 1.0))), (2 |-> ((0, 0.4), (3, 0.2), (2, 1.0))),
+          (3 |-> ((1, 0.6), (3, 1.0))), (4 |-> ((2, 0.6), (4, 1.0))), (5 |-> ((3, 0.4), (4, 0.6), (5, 1.0))) .
+  eq G6 = (0 |-> ((5, 1.0))), (1 |-> ((0, 0.6))), (2 |-> ((0, 0.4), (3, 0.2))),
+          (3 |-> ((1, 0.6))), (4 |-> ((2, 0.6))), (5 |-> ((3, 0.4), (4, 0.6)))  .
+  eq K = 1000.0 .
+  eq alpha = 1.6 .
+endfm
+
+mod MULTIAGENT-MODEL is
+  pr DATA .
+  pr SET{DisTriple} .
+  pr SET{DisPair} .
+  pr SET{Agent} .
+  pr CONVERSION .
+
+  sort State .
+
+  op < _, _, _, _ > : Set{Agent} Map{Nat, Set{AdjPair}} Map{Nat, Set{AdjPair}} Nat -> State .
+
+  op create-dis : Nat Float Float -> Set{DisTriple} .
+  op acc-dis : Set{Agent} Set{DisTriple} -> Set{DisTriple} .
+  op adjust : Set{DisTriple} -> Set{DisPair} .
+  op aux-polar : Set{DisPair} Set{DisPair} -> Float .
+  op per : Set{DisPair} -> Float .
+  op apply : DisPair Set{DisPair} -> Float .
+  op calc-update : Float Float Float -> Float .
+  op update : Set{Agent} Map{Nat, Set{AdjPair}} -> Set{Agent} .
+  op ag : Int Float Float -> Agent [ctor] .
+
+  ops ListAgents ListAgents2 ListAgents3 : -> Set{Agent} .
+
+  vars Z W I J T : Nat .
+  vars F X Y S If1 If2 : Float .
+  vars SDis : Set{DisTriple} .
+  vars PairDis PairDis' : Set{DisPair} .
+  vars Adj : Set{AdjPair} .
+  vars LA : Set{Agent}
+  vars Graph Graph' : Map{Nat, Set{AdjPair}} .
+
+  eq create-dis(0, X, Y) = empty .
+  eq create-dis(1, X, Y) = (X, 1.01, 0) .
+  eq create-dis(Z, X, Y) = (X, X + (1.0 / Y), 0), create-dis(Z - 1, X + (1.0 / Y), Y) .
+
+  eq acc-dis(empty, SDis) = SDis .
+  ceq acc-dis((ag(I, X, S), LA), ((Y, F, W), SDis)) = acc-dis(LA, ((Y, F, W + 1), SDis)) if X >= Y and X < F .
+
+  eq adjust(empty) = empty .
+  eq adjust(((X, Y, T), SDis)) = (((X + Y) / 2.0), T), adjust(SDis) .
+
+  eq apply((X, T), empty) = 0.0 .
+  eq apply((X, T), ((Y, W), PairDis)) = ((float(T) ^ alpha) * float(W) * abs(X - Y)) + apply((X, T), PairDis) .
+
+  eq aux-polar(empty, PairDis') = 0.0 .
+  eq aux-polar(((X, T), PairDis), PairDis') = apply((X, T), PairDis') .
+
+  eq per(PairDis) = K * aux-polar(PairDis, PairDis) .
+  eq calc-update(X, Y, S) = (1.0 - abs(X - Y)) * S * (X - Y) .
+
+  eq update(empty, Graph) = empty .
+  ceq update((ag(I, X, Y), LA), Graph) = ag(I,  X + (Y / float(| Graph[I] |)), 0.0), update(LA, Graph) if | Graph[I] | > 0 .
+  eq update((ag(I, X, Y), LA), Graph) = ag(I,  X, 0.0), update(LA, Graph) [owise] .
+
+  eq ListAgents = ag(0, 0.0, 0.0), ag(1, 0.1, 0.0), ag(2, 0.2, 0.0), ag(3, 0.8, 0.0), ag(4, 0.9, 0.0), ag(5, 1.0, 0.0) .
+  eq ListAgents2 = ag(0, 0.5, 0.0), ag(1, 1.0, 0.0), ag(2, 0.0, 0.0) .
+  eq ListAgents3 = ag(0, 0.0, 0.0), ag(1, 0.1, 0.0), ag(2, 0.15, 0.0), ag(3, 0.82, 0.0), ag(4, 0.89, 0.0), ag(5, 0.92, 0.0) .
+
+  crl [comm1] : < (ag(I, X, F), ag(J, Y, S), LA), ((I |-> ((J, If1), Adj)), Graph), Graph', T > =>
+               < (ag(J, Y, S), ag(I, X, F + calc-update(Y, X, If1)), LA), ((I |-> Adj), Graph), Graph', T > if T > 0 .
+  crl [comm2] : < (ag(I, X, F), LA), ((I |-> ((I, If1), Adj)), Graph), Graph', T > =>
+               < (ag(I, X, F + calc-update(X, X, If1)), LA), ((I |-> Adj), Graph), Graph', T > if T > 0 .
+  rl [change] : < LA, ((I |-> empty), Graph), Graph', T > => < LA, Graph, Graph', T > .
+
+  rl [next] : < LA, empty, Graph, T > => < update(LA, Graph), Graph, Graph, T - 1 > .
+
+endm
+
+
+---(
+red adjust(acc-dis(ListAgents, create-dis(5, 0.0, 5.0))) .
+rew < ListAgents, G, G, 100 > .
+rew < ListAgents, G2, G2, 100 > .
+rew < ListAgents, G3, G3, 100000 > .
+search < ListAgents, G, G, 1 > =>! < ListAgents':Set{Agent}, G:Map{Nat, Set{AdjPair}}, G:Map{Nat, Set{AdjPair}}, 0 > .
+
+)
+	

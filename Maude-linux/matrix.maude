@@ -1,0 +1,31 @@
+fmod INDEX-PAIR is 
+ pr NAT . 
+ sort IndexPair . 
+ op _,_ : Nat Nat -> IndexPair [ctor] . 
+endfm
+
+view IndexPair from TRIV to INDEX-PAIR is 
+ sort Elt to IndexPair . 
+endv
+     
+
+ 
+fmod MATRIX{X :: DEFAULT} is 
+ pr (ARRAY * (sort Entry{X,Y} to Entry{Y}, 
+           sort Array{X,Y} to Matrix{Y})) 
+   {IndexPair, X} . 
+endfm
+     
+
+ 
+fmod INT-MATRIX is 
+ pr MATRIX{Int0} * (sort Entry{Int0} to IntMatrixEntry, 
+               sort Matrix{Int0} to IntMatrix ) . 
+               
+  op M : -> IntMatrix .
+  eq M = (0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> -1 .
+  
+endfm
+
+
+
