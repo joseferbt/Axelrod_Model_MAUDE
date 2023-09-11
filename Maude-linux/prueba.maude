@@ -23,8 +23,7 @@ fmod INT-MATRIX is
 			   op empty to empty ). 
 			   
   op M : -> IntMatrix .
-  eq M = (0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> -1 .
-  
+  eq M = (0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> -1 .  
 endfm
 
 fmod NEEDED-SORT is
@@ -38,7 +37,6 @@ fmod NEEDED-SORT is
 	op gp : IntMatrix -> Graph [ctor] .
 
 	op ag : Nat IntMatrix -> Agent [ctor] .
- 
 endfm 
 
 view Agent from TRIV to NEEDED-SORT is
@@ -59,68 +57,72 @@ mod MODELO is
 	eq f = 3 .
 	eq t = 5 .
 	eq n = 100 .
-	
+	ops AgentList sol : -> Set{Agent} .
+
 	op AL : -> Set{Agent} .
 	eq AL = ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 )), ag(2, ((0,0) |-> 3 ; (0,1) |-> 2 ; (1,1) |-> 1 )) .
 	op GRAFO : -> Graph .	
 	eq GRAFO = gp((0,0) |-> 0 ; (0,1) |-> 1 ; (0,2) |->  1 ; (1,0) |-> 1 ; (1,1) |-> 0 ; (1,2) |->  1 ; (2,0) |-> 1 ; (2,1) |-> 1 ; (2,2) |->  0  ) .
 	
+	--- Represents the state of the model how has change over n itterations
 	op < _, _, _ > : Graph Set{Agent} Nat -> State .
-
-	ops AgentList sol : -> Set{Agent} .
-	
-	op sametreat : Agent Agent -> Set{Agent} .
-	
-	op threshold : Nat Nat -> Bool .
-		
-	op idAgent : Agent -> Nat .
-
-	op getNumber : Nat -> Nat .
-	eq getNumber(I) = genRandom(0, I) .
-
-	op selectTreat : Set{IndexPair} Nat -> IndexPair .
-	ceq selectTreat((T, P), s(I)) = selectTreat(T, I) . 
-	ceq selectTreat((T, P), 0) = P .
-
-	op pickAgent : Set{Agent} -> Agent .
-	op update : Graph Set{Agent} -> Set{Agent} .
-	op getNeighbors : Graph Nat -> Set{IndexPair} .
-	op getAgent : Set{Agent} Nat -> Agent .
-	op inlist : Set{Agent} Nat -> Bool .
-	op availableTreat : Agent Agent -> Set{IndexPair} .
-	op auxTreats : Agent Agent -> Agent .
-	op changeTreat : Agent Agent IndexPair -> Agent .
-		
 
 	vars G NET G' : Graph .
 	vars LA LA' : Set{Agent} .
 	vars A A' : Agent .
 	vars I J K L M N B C : Nat .
 	var V V' : IntMatrix .
-	var T T': Set{IndexPair} .
+	var T T' : Set{IndexPair} .
 	var P : IndexPair .
 
----(	eq inlist((LA, ag(I, V)), I) = true .
+--- select a index over a list of index where the list is a list of not common treats betwen two agents. 
+	op selectTreat : Set{IndexPair} Nat -> IndexPair .
+	eq selectTreat((T, P), s(I)) = selectTreat(T, I) . 
+	eq selectTreat((T, P), 0) = P .
+
+	op selectAgent : Set{Agent} Nat -> Agent .
+	eq selectAgent((LA, ag(s(I),V)), s(I)) = selectAgent(LA, I) . 
+	eq selectAgent((LA, ag(0, V)), 0) =  ag(0, V).
+
+
+---(
+	op inlist : Set{Agent} Nat -> Bool .
+	eq inlist((LA, ag(I, V)), I) = true .
 	eq inlist(LA, I) = false [owise] .
 	eq idAgent(ag(I, V)) = I .
 )
+--- is a boolean oeration that is true if the difference betwen two treats of an agent is iqual or less than a. 
+	
+	op threshold : Nat Nat -> Bool .
 	eq threshold(I, J) = if abs(J - I) <= a and abs(J - I) > 0 then true else false fi .
+
+--- is a exchange of an index treat information betwen two agents.
+	op changeTreat : Agent Agent IndexPair -> Agent .
 	eq changeTreat(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V'))), P) = ag(I, (((J, K) |-> N); V)) . 
 
-	eq availableTreat(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V')))) = if threshold(L, N) then (J, K), availableTreat(ag(I, V), ag(M, V')) else availableTreat(ag(I, V), ag(M, V')) fi .
-	
-	
+	--- selects the treats that are not common but under the threshold.
+	op availableTreat : Agent Agent -> Set{IndexPair} .
+	eq availableTreat(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V')))) = if threshold(L, N) then (J, K), availableTreat(ag(I, V), ag(M, V')) else availableTreat(ag(I, V), ag(M, V')) fi .	
 	eq availableTreat(ag(I, empty), ag(J, empty)) = empty .
-
-	eq getAgent((ag(I, V), LA), I) = ag(I,V)  .
+	
+	--- gives an agent that has a index I
+	op getAgent : Set{Agent} IndexPair -> Agent .
+	eq getAgent((ag(I, V), LA), I,J) = ag(I, V)  .
+	
+	--- gives the neighbors of an agent with index I.
+	op getNeighbors : Graph Nat -> Set{IndexPair} .
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , I) = if K == 1 then (I,J), getNeighbors(gp(V), I) else getNeighbors(gp(V), I) fi .
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , L) = empty , getNeighbors(gp(V), L)  .
 	eq getNeighbors(gp(empty), I) = empty .
-	--- eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectTreat(getNeighbors(G, I)))) .
-	eq auxTreats(A, A') = changeTreat(A, A', selectTreat(availableTreat(A, A'), genRandom(0,| availableTreat(A, A') |))).
 	
----rl pickAgent((A, LA)) => A .
----rl selectTreat((P, T)) => P .
+	---takes 
+	op update : Graph Set{Agent} -> Set{Agent} .
+	eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectTreat(getNeighbors(G, I), genRandom(0, | getNeighbors(G, I) |)))) .
+
+	--- is an auxiliar function that change a random not common treat betwen two agents
+	op auxTreats : Agent Agent -> Agent .
+	eq auxTreats(A, A') = changeTreat(A, A', selectTreat(availableTreat(A, A'), genRandom(0,| availableTreat(A, A') | - 1 ))).
+	
  crl [iter] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
 	 
 endm
