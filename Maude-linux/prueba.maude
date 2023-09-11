@@ -1,3 +1,6 @@
+load sampler .
+set clear rules off .
+
 fmod INDEX-PAIR is 
  pr NAT . 
  sort IndexPair . 
@@ -7,22 +10,18 @@ endfm
 view IndexPair from TRIV to INDEX-PAIR is 
  sort Elt to IndexPair . 
 endv
-     
-
  
 fmod MATRIX{X :: DEFAULT} is 
  pr (ARRAY * (sort Entry{X,Y} to Entry{Y}, 
-           sort Array{X,Y} to Matrix{Y})) 
+		   sort Array{X,Y} to Matrix{Y})) 
    {IndexPair, X} . 
 endfm
-     
-
  
 fmod INT-MATRIX is 
  pr MATRIX{Int0} * (sort Entry{Int0} to IntMatrixEntry, 
-               sort Matrix{Int0} to IntMatrix,
-               op empty to empty ). 
-               
+			   sort Matrix{Int0} to IntMatrix,
+			   op empty to empty ). 
+			   
   op M : -> IntMatrix .
   eq M = (0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> -1 .
   
@@ -50,12 +49,16 @@ view Graph from TRIV to NEEDED-SORT is
 endv
 
 mod MODELO is 
+	pr SAMPLER .
 	pr SET{IndexPair} .
 	pr SET{Agent} .
 	sort State .
 
-	op a : -> Nat .
+	ops a f t n : -> Nat .
 	eq a = 1 .
+	eq f = 3 .
+	eq t = 5 .
+	eq n = 100 .
 	
 	op AL : -> Set{Agent} .
 	eq AL = ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 )), ag(2, ((0,0) |-> 3 ; (0,1) |-> 2 ; (1,1) |-> 1 )) .
@@ -71,9 +74,16 @@ mod MODELO is
 	op threshold : Nat Nat -> Bool .
 		
 	op idAgent : Agent -> Nat .
-	op selectTreat : Set{IndexPair} -> IndexPair .
-	op update : Graph Set{Agent} -> Set{Agent} .
+
+	op getNumber : Nat -> Nat .
+	eq getNumber(I) = genRandom(0, I) .
+
+	op selectTreat : Set{IndexPair} Nat -> IndexPair .
+	ceq selectTreat((T, P), s(I)) = selectTreat(T, I) . 
+	ceq selectTreat((T, P), 0) = P .
+
 	op pickAgent : Set{Agent} -> Agent .
+	op update : Graph Set{Agent} -> Set{Agent} .
 	op getNeighbors : Graph Nat -> Set{IndexPair} .
 	op getAgent : Set{Agent} Nat -> Agent .
 	op inlist : Set{Agent} Nat -> Bool .
@@ -106,14 +116,11 @@ mod MODELO is
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , I) = if K == 1 then (I,J), getNeighbors(gp(V), I) else getNeighbors(gp(V), I) fi .
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , L) = empty , getNeighbors(gp(V), L)  .
 	eq getNeighbors(gp(empty), I) = empty .
-	eq selectTreat((P, T)) = P .
-	eq selectTreat((P, T)) = P .
-	eq selectTreat((P, T)) = P .
-	eq pickAgent((A, LA )) = A .
-	eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectTrait(getNeighbors(G, I)))) .
-	eq auxTreats(A, A') = changeTreat(A, A', selectTreat(availableTreat(A, A'))).
+	--- eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectTreat(getNeighbors(G, I)))) .
+	eq auxTreats(A, A') = changeTreat(A, A', selectTreat(availableTreat(A, A'), genRandom(0,| availableTreat(A, A') |))).
 	
-	
+---rl pickAgent((A, LA)) => A .
+---rl selectTreat((P, T)) => P .
  crl [iter] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
 	 
 endm
@@ -127,6 +134,9 @@ red auxTreats(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |->
 red getNeighbors(GRAFO, 0)
 red auxTreats(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
 rew < GRAFO, AL, 2> .
+red getNeighbors(GRAFO, 0) .
+
+red selectTreat(((1,2), (1,4), (1,5), (1,6), (1,7)), 5) .
 
 )
 

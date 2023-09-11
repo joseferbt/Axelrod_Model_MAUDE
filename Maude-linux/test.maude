@@ -1,4 +1,4 @@
-fmod prueba is 
+---(fmod prueba is 
  pr MAP{Nat, List{Nat}} .
 sort Agent .
  
@@ -18,3 +18,20 @@ op AL : -> Set{Agent} .
 eq AL = ag(0, (0 |-> (1, 2, 3, 4), 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3)), ag(3, (0 |-> 4, 1 |-> 1, 2 |-> 2, 3 |-> 2)) .
 
 endfm
+)
+
+mod prueba is
+pr NAT .
+pr SET{Nat} .
+op select : Set{Nat} -> Nat .
+op update : Nat -> Nat .
+
+var A : Nat .
+var LA : Set{Nat} .
+
+eq update(LA) = select(LA) + 1  .
+
+
+rl [select] : select((LA, A)) => A .
+
+endm 
