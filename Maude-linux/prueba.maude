@@ -149,6 +149,7 @@ red auxFeatures(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |
 red getNeighbors(GRAFO, 0)
 red auxFeatures(ag(0, ((0,0) |-> 1  (0,1) |-> 2  (1,1) |-> 2 )), ag(1, ((0,0) |-> 2  (0,1) |-> 3 , (1,1) |-> 4 ))) .
 rew < GRAFO, AL, 1 > .
+rew resultAgents(< GRAFO, AL, 1 >) .
 red getNeighbors(GRAFO, 0) .
 red countEquals(ag(1, ((0,0) |-> 1 , (0,1) |-> 2 , (1,1) |-> 2 )), 0.0 , ag(2, ((0,0) |-> 1 , (0,1) |-> 2 , (1,1) |-> 2)) ) .
 red selectFeature(((1,2), (1,4), (1,5), (1,6), (1,7)), 5) .
