@@ -1,0 +1,21 @@
+mod SAMPLER is
+pr NAT .
+pr RANDOM .
+pr COUNTER .
+pr CONVERSION .
+
+var P : Float .
+vars Min Max : Nat .
+
+op rand : -> [Nat] .
+op randF : -> [Float] .
+op sampleBernoulli : Float -> [Bool] .
+rl randF => float(random(counter) / 4294967295) .
+rl rand => random(counter) .
+rl sampleBernoulli(P) => (randF < P) .
+
+ --- Generate a random natural number in interval [Min, Max]
+ op genRandom : Nat Nat -> Nat   .
+ eq genRandom(Min, Max) = (rand rem ((Max - Min) + 1)) + Min .
+
+endm
