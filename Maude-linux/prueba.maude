@@ -34,7 +34,7 @@ mod MODELO is
 	eq a = 1 .
 	eq f = 3.0 .
 	eq t = 5 .
-	eq n = 100 .
+	eq n = 3 .
 	ops AgentList sol : -> Set{Agent} .
 
 	op AL : -> Set{Agent} .
@@ -63,13 +63,12 @@ mod MODELO is
 	eq selectAgent((LA, ag(s(I),V)), s(I)) = selectAgent(LA, I) .
 	eq selectAgent((LA, ag(0, V)), 0) =  ag(0, V).
 
+--- calculate which is the probability of two agents to interact
 	op proSelect : Agent Agent -> Float .
-	eq proSelect( A, A' ) =  countEquals( A, 0.0, A' ) .
+	eq proSelect( A, A' ) =  f / countEquals( A, 0.0, A' ) .
 
-  op test : -> Float .
-	eq test = countEquals(ag(1, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), 0.0 , ag(2, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2)) ) .
-
-	op countEquals : Agent  Float Agent -> Float .
+--- is an auxiliar function that count how many equals features has two agents
+  op countEquals : Agent  Float Agent -> Float .
 	eq countEquals(ag(N, (((I,J) |-> L); V)), O, ag(M, (((I,J) |-> L); V'))) = O + 1.0 + countEquals(ag(N, V), O, ag(M, V')) .
 	eq countEquals(ag(N, empty), O, ag(M, empty)) = 0.0 .
 
@@ -84,7 +83,7 @@ mod MODELO is
 	op threshold : Nat Nat -> Bool .
 	eq threshold(I, J) = if abs(J - I) <= a and abs(J - I) > 0 then true else false fi .
 
---- is a exchange of an index treat information betwen two agents.
+--- is a exchange of an index feature information betwen two agents.
 	op changeTreat : Agent Agent IndexPair -> Agent .
 	eq changeTreat(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V'))), P) = ag(I, (((J, K) |-> N); V)) .
 
@@ -97,6 +96,12 @@ mod MODELO is
 	op getAgent : Set{Agent} IndexPair -> Agent .
 	eq getAgent((ag(I, V), LA), I,J) = ag(I, V)  .
 
+	op getRAgent : Set{Agent} -> Set{Agent} .
+	eq getRAgent(LA) = getAgent(LA, (genRandom(0, n - 1),1)) .
+
+	op delAgent : Set{Agent} Agent -> Set{Agent} .
+	eq delAgent((LA,ag(I, V) ), ag(I, V)) = LA .
+
 	--- gives the neighbors of an agent with index I.
 	op getNeighbors : Graph Nat -> Set{IndexPair} .
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , I) = if K == 1 then (I,J), getNeighbors(gp(V), I) else getNeighbors(gp(V), I) fi .
@@ -105,13 +110,17 @@ mod MODELO is
 
 	---takes a graph and a list of agents selects an agent and from it gets it's neighbors, select one randomly and then gets all posible treats and ramdomly select one to exchange value.
 	op update : Graph Set{Agent} -> Set{Agent} .
-	eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectTreat(getNeighbors(G, I), genRandom(0, | getNeighbors(G, I) | - 1 )))) .
+	eq update(G, LA) = auxUpdate(G, LA, getRAgent(LA)) .
 
-	--- is an auxiliar function that change a random not common treat betwen two agents
+---
+	op auxUpdate : Graph Set{Agent} Agent -> Set{Agent} .
+	eq auxUpdate(G, LA, ag(I, V)) = delAgent(LA, ag(I, V)), auxTreats(ag(I,V), getAgent(LA, selectTreat(getNeighbors(G, I), genRandom(0, | getNeighbors(G, I) | - 1 )))) .
+
+--- is an auxiliar function that change a random not common treat betwen two agents
 	op auxTreats : Agent Agent -> Agent .
 	eq auxTreats(A, A') = changeTreat(A, A', selectTreat(availableTreat(A, A'), genRandom(0,| availableTreat(A, A') | - 1 ))).
 
- crl [iter] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
+ crl [inte] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
 
 endm
 
