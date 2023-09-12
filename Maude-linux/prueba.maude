@@ -1,43 +1,20 @@
 load sampler .
 set clear rules off .
 
-fmod INDEX-PAIR is 
- pr NAT . 
- sort IndexPair . 
- op _,_ : Nat Nat -> IndexPair [ctor] . 
-endfm
-
-view IndexPair from TRIV to INDEX-PAIR is 
- sort Elt to IndexPair . 
-endv
- 
-fmod MATRIX{X :: DEFAULT} is 
- pr (ARRAY * (sort Entry{X,Y} to Entry{Y}, 
-		   sort Array{X,Y} to Matrix{Y})) 
-   {IndexPair, X} . 
-endfm
- 
-fmod INT-MATRIX is 
- pr MATRIX{Int0} * (sort Entry{Int0} to IntMatrixEntry, 
-			   sort Matrix{Int0} to IntMatrix,
-			   op empty to empty ). 
-			   
-  op M : -> IntMatrix .
-  eq M = (0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> -1 .  
-endfm
+load matrix .
 
 fmod NEEDED-SORT is
 	pr INT-MATRIX .
 	inc NAT .
-  	inc INT .
-  	inc FLOAT .
+  inc INT .
+  inc FLOAT .
 	sort Agent .
-	sort Graph . 
-	
-	op gp : IntMatrix -> Graph [ctor] .
+	sort Graph .
 
+	op gp : IntMatrix -> Graph [ctor] .
 	op ag : Nat IntMatrix -> Agent [ctor] .
-endfm 
+
+endfm
 
 view Agent from TRIV to NEEDED-SORT is
   sort Elt to Agent .
@@ -46,7 +23,7 @@ view Graph from TRIV to NEEDED-SORT is
   sort Elt to Graph .
 endv
 
-mod MODELO is 
+mod MODELO is
 	pr SAMPLER .
 	pr SET{IndexPair} .
 	pr SET{Agent} .
@@ -62,9 +39,9 @@ mod MODELO is
 
 	op AL : -> Set{Agent} .
 	eq AL = ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 )), ag(2, ((0,0) |-> 3 ; (0,1) |-> 2 ; (1,1) |-> 1 )) .
-	op GRAFO : -> Graph .	
+	op GRAFO : -> Graph .
 	eq GRAFO = gp((0,0) |-> 0 ; (0,1) |-> 1 ; (0,2) |->  1 ; (1,0) |-> 1 ; (1,1) |-> 0 ; (1,2) |->  1 ; (2,0) |-> 1 ; (2,1) |-> 1 ; (2,2) |->  0  ) .
-	
+
 	--- Represents the state of the model how has change over n itterations
 	op < _, _, _ > : Graph Set{Agent} Nat -> State .
 
@@ -77,21 +54,24 @@ mod MODELO is
 	var P : IndexPair .
 	var O : Float .
 
---- select a index over a list of index where the list is a list of not common treats betwen two agents. 
+--- select a index over a list of index where the list is a list of not common treats betwen two agents.
 	op selectTreat : Set{IndexPair} Nat -> IndexPair .
-	eq selectTreat((T, P), s(I)) = selectTreat(T, I) . 
+	eq selectTreat((T, P), s(I)) = selectTreat(T, I) .
 	eq selectTreat((T, P), 0) = P .
 
 	op selectAgent : Set{Agent} Nat -> Agent .
-	eq selectAgent((LA, ag(s(I),V)), s(I)) = selectAgent(LA, I) . 
+	eq selectAgent((LA, ag(s(I),V)), s(I)) = selectAgent(LA, I) .
 	eq selectAgent((LA, ag(0, V)), 0) =  ag(0, V).
 
 	op proSelect : Agent Agent -> Float .
-	eq proSelect(A, A') =  countEquals(A, 0.0, A') .
+	eq proSelect( A, A' ) =  countEquals( A, 0.0, A' ) .
+
+  op test : -> Float .
+	eq test = countEquals(ag(1, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), 0.0 , ag(2, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2)) ) .
 
 	op countEquals : Agent  Float Agent -> Float .
 	eq countEquals(ag(N, (((I,J) |-> L); V)), O, ag(M, (((I,J) |-> L); V'))) = O + 1.0 + countEquals(ag(N, V), O, ag(M, V')) .
-	eq countEquals(ag(N, empty), O, ag(M, empty)) = 0.0 . 
+	eq countEquals(ag(N, empty), O, ag(M, empty)) = 0.0 .
 
 ---(
 	op inlist : Set{Agent} Nat -> Bool .
@@ -99,30 +79,30 @@ mod MODELO is
 	eq inlist(LA, I) = false [owise] .
 	eq idAgent(ag(I, V)) = I .
 )
---- is a boolean oeration that is true if the difference betwen two treats of an agent is iqual or less than a. 
-	
+--- is a boolean oeration that is true if the difference betwen two treats of an agent is iqual or less than a.
+
 	op threshold : Nat Nat -> Bool .
 	eq threshold(I, J) = if abs(J - I) <= a and abs(J - I) > 0 then true else false fi .
 
 --- is a exchange of an index treat information betwen two agents.
 	op changeTreat : Agent Agent IndexPair -> Agent .
-	eq changeTreat(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V'))), P) = ag(I, (((J, K) |-> N); V)) . 
+	eq changeTreat(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V'))), P) = ag(I, (((J, K) |-> N); V)) .
 
 	--- selects the treats that are not common but under the threshold.
 	op availableTreat : Agent Agent -> Set{IndexPair} .
-	eq availableTreat(ag(I, (((J,K) |-> L); V)), (ag(M, (((J,K) |-> N); V')))) = if threshold(L, N) then (J,K), availableTreat(ag(I, V), ag(M, V')) else availableTreat(ag(I, V), ag(M, V')) fi .	
+	eq availableTreat(ag(I, (((J,K) |-> L); V)), (ag(M, (((J,K) |-> N); V')))) = if threshold(L, N) then (J,K), availableTreat(ag(I, V), ag(M, V')) else availableTreat(ag(I, V), ag(M, V')) fi .
 	eq availableTreat(ag(I, empty), ag(J, empty)) = empty .
-	
+
 	--- gives an agent that has a index I
 	op getAgent : Set{Agent} IndexPair -> Agent .
 	eq getAgent((ag(I, V), LA), I,J) = ag(I, V)  .
-	
+
 	--- gives the neighbors of an agent with index I.
 	op getNeighbors : Graph Nat -> Set{IndexPair} .
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , I) = if K == 1 then (I,J), getNeighbors(gp(V), I) else getNeighbors(gp(V), I) fi .
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , L) = empty , getNeighbors(gp(V), L)  .
 	eq getNeighbors(gp(empty), I) = empty .
-	
+
 	---takes a graph and a list of agents selects an agent and from it gets it's neighbors, select one randomly and then gets all posible treats and ramdomly select one to exchange value.
 	op update : Graph Set{Agent} -> Set{Agent} .
 	eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectTreat(getNeighbors(G, I), genRandom(0, | getNeighbors(G, I) | - 1 )))) .
@@ -130,12 +110,12 @@ mod MODELO is
 	--- is an auxiliar function that change a random not common treat betwen two agents
 	op auxTreats : Agent Agent -> Agent .
 	eq auxTreats(A, A') = changeTreat(A, A', selectTreat(availableTreat(A, A'), genRandom(0,| availableTreat(A, A') | - 1 ))).
-	
+
  crl [iter] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
-	 
+
 endm
-	
-	
+
+
 ---(
 red getAgent((ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 1, 1 |-> 3, 2 |-> 4, 3 |-> 1))), 1) .
 red availableTreat(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
@@ -145,8 +125,7 @@ red getNeighbors(GRAFO, 0)
 red auxTreats(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
 rew < GRAFO, AL, 2> .
 red getNeighbors(GRAFO, 0) .
-red countEquals(((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 ), 0.0 , ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 ) ) .
+red countEquals(ag(1, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), 0.0 , ag(2, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2)) ) .
 red selectTreat(((1,2), (1,4), (1,5), (1,6), (1,7)), 5) .
 red proSelect(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
 )
-
