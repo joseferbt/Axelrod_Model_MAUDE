@@ -52,9 +52,10 @@ mod MODELO is
 	pr SET{Agent} .
 	sort State .
 
-	ops a f t n : -> Nat .
+	op f : -> Float .
+	ops a  t n : -> Nat .
 	eq a = 1 .
-	eq f = 3 .
+	eq f = 3.0 .
 	eq t = 5 .
 	eq n = 100 .
 	ops AgentList sol : -> Set{Agent} .
@@ -74,6 +75,7 @@ mod MODELO is
 	var V V' : IntMatrix .
 	var T T' : Set{IndexPair} .
 	var P : IndexPair .
+	var O : Float .
 
 --- select a index over a list of index where the list is a list of not common treats betwen two agents. 
 	op selectTreat : Set{IndexPair} Nat -> IndexPair .
@@ -84,6 +86,12 @@ mod MODELO is
 	eq selectAgent((LA, ag(s(I),V)), s(I)) = selectAgent(LA, I) . 
 	eq selectAgent((LA, ag(0, V)), 0) =  ag(0, V).
 
+	op proSelect : Agent Agent -> Float .
+	eq proSelect(A, A') =  countEquals(A, 0.0, A') .
+
+	op countEquals : Agent  Float Agent -> Float .
+	eq countEquals(ag(N, (((I,J) |-> L); V)), O, ag(M, (((I,J) |-> L); V'))) = O + 1.0 + countEquals(ag(N, V), O, ag(M, V')) .
+	eq countEquals(ag(N, empty), O, ag(M, empty)) = 0.0 . 
 
 ---(
 	op inlist : Set{Agent} Nat -> Bool .
@@ -102,7 +110,7 @@ mod MODELO is
 
 	--- selects the treats that are not common but under the threshold.
 	op availableTreat : Agent Agent -> Set{IndexPair} .
-	eq availableTreat(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V')))) = if threshold(L, N) then (J, K), availableTreat(ag(I, V), ag(M, V')) else availableTreat(ag(I, V), ag(M, V')) fi .	
+	eq availableTreat(ag(I, (((J,K) |-> L); V)), (ag(M, (((J,K) |-> N); V')))) = if threshold(L, N) then (J,K), availableTreat(ag(I, V), ag(M, V')) else availableTreat(ag(I, V), ag(M, V')) fi .	
 	eq availableTreat(ag(I, empty), ag(J, empty)) = empty .
 	
 	--- gives an agent that has a index I
@@ -115,9 +123,9 @@ mod MODELO is
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , L) = empty , getNeighbors(gp(V), L)  .
 	eq getNeighbors(gp(empty), I) = empty .
 	
-	---takes 
+	---takes a graph and a list of agents selects an agent and from it gets it's neighbors, select one randomly and then gets all posible treats and ramdomly select one to exchange value.
 	op update : Graph Set{Agent} -> Set{Agent} .
-	eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectTreat(getNeighbors(G, I), genRandom(0, | getNeighbors(G, I) |)))) .
+	eq update(G, (ag(I, V), LA)) = LA, auxTreats(ag(I, V), getAgent(LA, selectTreat(getNeighbors(G, I), genRandom(0, | getNeighbors(G, I) | - 1 )))) .
 
 	--- is an auxiliar function that change a random not common treat betwen two agents
 	op auxTreats : Agent Agent -> Agent .
@@ -137,8 +145,8 @@ red getNeighbors(GRAFO, 0)
 red auxTreats(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
 rew < GRAFO, AL, 2> .
 red getNeighbors(GRAFO, 0) .
-
+red countEquals(((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 ), 0.0 , ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 ) ) .
 red selectTreat(((1,2), (1,4), (1,5), (1,6), (1,7)), 5) .
-
+red proSelect(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
 )
 
