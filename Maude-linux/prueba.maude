@@ -54,10 +54,10 @@ mod MODELO is
 	var P : IndexPair .
 	var O : Float .
 
---- select a index over a list of index where the list is a list of not common treats betwen two agents.
-	op selectTreat : Set{IndexPair} Nat -> IndexPair .
-	eq selectTreat((T, P), s(I)) = selectTreat(T, I) .
-	eq selectTreat((T, P), 0) = P .
+--- select a index over a list of index where the list is a list of not common features betwen two agents.
+	op selectFeature : Set{IndexPair} Nat -> IndexPair .
+	eq selectFeature((T, P), s(I)) = selectFeature(T, I) .
+	eq selectFeature((T, P), 0) = P .
 
 	op selectAgent : Set{Agent} Nat -> Agent .
 	eq selectAgent((LA, ag(s(I),V)), s(I)) = selectAgent(LA, I) .
@@ -78,23 +78,26 @@ mod MODELO is
 	eq inlist(LA, I) = false [owise] .
 	eq idAgent(ag(I, V)) = I .
 )
---- is a boolean oeration that is true if the difference betwen two treats of an agent is iqual or less than a.
+--- is a boolean oeration that is true if the difference betwen two features of an agent is iqual or less than a.
 
 	op threshold : Nat Nat -> Bool .
 	eq threshold(I, J) = if abs(J - I) <= a and abs(J - I) > 0 then true else false fi .
 
 --- is a exchange of an index feature information betwen two agents.
-	op changeTreat : Agent Agent IndexPair -> Agent .
-	eq changeTreat(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V'))), P) = ag(I, (((J, K) |-> N); V)) .
+	op changeFeature : Agent Agent IndexPair -> Agent .
+	eq changeFeature(ag(I, (((J, K) |-> L); V)), (ag(M, (((J, K) |-> N); V'))), P) = ag(I, (((J, K) |-> N); V)) .
 
-	--- selects the treats that are not common but under the threshold.
-	op availableTreat : Agent Agent -> Set{IndexPair} .
-	eq availableTreat(ag(I, (((J,K) |-> L); V)), (ag(M, (((J,K) |-> N); V')))) = if threshold(L, N) then (J,K), availableTreat(ag(I, V), ag(M, V')) else availableTreat(ag(I, V), ag(M, V')) fi .
-	eq availableTreat(ag(I, empty), ag(J, empty)) = empty .
+	--- selects the features that are not common but under the threshold.
+	op availableFeature : Agent Agent -> Set{IndexPair} .
+	eq availableFeature(ag(I, (((J,K) |-> L); V)), (ag(M, (((J,K) |-> N); V')))) = if threshold(L, N) then (J,K), availableFeature(ag(I, V), ag(M, V')) else availableFeature(ag(I, V), ag(M, V')) fi .
+	eq availableFeature(ag(I, empty), ag(J, empty)) = empty .
 
 	--- gives an agent that has a index I
 	op getAgent : Set{Agent} IndexPair -> Agent .
 	eq getAgent((ag(I, V), LA), I,J) = ag(I, V)  .
+
+	op selectNeighbor : Set{Agent} IndexPair -> Agent .
+	eq selectNeighbor((ag(J, V), LA), I,J) = ag(J, V)  .
 
 	op getRAgent : Set{Agent} -> Set{Agent} .
 	eq getRAgent(LA) = getAgent(LA, (genRandom(0, n - 1),1)) .
@@ -108,17 +111,20 @@ mod MODELO is
 	eq getNeighbors( gp( (I,J) |-> K ; V ) , L) = empty , getNeighbors(gp(V), L)  .
 	eq getNeighbors(gp(empty), I) = empty .
 
-	---takes a graph and a list of agents selects an agent and from it gets it's neighbors, select one randomly and then gets all posible treats and ramdomly select one to exchange value.
+	---takes a graph and a list of agents s an agent and from it gets it's neighbors, select one randomly and then gets all posible features and ramdomly select one to exchange value.
 	op update : Graph Set{Agent} -> Set{Agent} .
 	eq update(G, LA) = auxUpdate(G, LA, getRAgent(LA)) .
 
 ---
 	op auxUpdate : Graph Set{Agent} Agent -> Set{Agent} .
-	eq auxUpdate(G, LA, ag(I, V)) = delAgent(LA, ag(I, V)), auxTreats(ag(I,V), getAgent(LA, selectTreat(getNeighbors(G, I), genRandom(0, | getNeighbors(G, I) | - 1 )))) .
+	eq auxUpdate(G, LA, ag(I, V)) = delAgent(LA, ag(I, V)), auxFeatures(ag(I,V), selectNeighbor(LA, selectFeature(getNeighbors(G, I), genRandom(0, | getNeighbors(G, I) | - 1 )))) .
 
---- is an auxiliar function that change a random not common treat betwen two agents
-	op auxTreats : Agent Agent -> Agent .
-	eq auxTreats(A, A') = changeTreat(A, A', selectTreat(availableTreat(A, A'), genRandom(0,| availableTreat(A, A') | - 1 ))).
+--- is an auxiliar function that change a random not common feature betwen two agents
+	op auxFeatures : Agent Agent -> Agent .
+	eq auxFeatures(A, A') = changeFeature(A, A', selectFeature(availableFeature(A, A'), genRandom(0,| availableFeature(A, A') | - 1 ))).
+
+	op resultAgents : State -> Set{Agent} .
+	eq resultAgents(< G, LA, 0 >) = LA .
 
  crl [inte] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
 
@@ -126,15 +132,17 @@ endm
 
 
 ---(
+rew selectFeature(getNeighbors(GRAFO, 2), genRandom(0, | getNeighbors(GRAFO, 2) | - 1 )) .
 red getAgent((ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 1, 1 |-> 3, 2 |-> 4, 3 |-> 1))), 1) .
-red availableTreat(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
-red changeTreat(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 )), (1,1)) .
-red auxTreats(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1))) .
+red availableFeature(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
+red changeFeature(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 )), (1,1)) .
+red auxFeatures(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1))) .
 red getNeighbors(GRAFO, 0)
-red auxTreats(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
-rew < GRAFO, AL, 2> .
+red auxFeatures(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
+rew < GRAFO, AL, 1 > .
 red getNeighbors(GRAFO, 0) .
 red countEquals(ag(1, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), 0.0 , ag(2, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2)) ) .
-red selectTreat(((1,2), (1,4), (1,5), (1,6), (1,7)), 5) .
+red selectFeature(((1,2), (1,4), (1,5), (1,6), (1,7)), 5) .
 red proSelect(ag(0, ((0,0) |-> 1 ; (0,1) |-> 2 ; (1,1) |-> 2 )), ag(1, ((0,0) |-> 2 ; (0,1) |-> 3 ; (1,1) |-> 4 ))) .
+rew selectFeature()
 )
