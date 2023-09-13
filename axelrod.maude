@@ -1,28 +1,10 @@
-load sampler .
+
+load graphs .
 set clear rules off .
 
 load matrix .
 
-fmod NEEDED-SORT is
-	pr MAP{Nat, Nat} .
-	pr INT-MATRIX .
-	inc NAT .
-  inc INT .
-  inc FLOAT .
-	sort Agent .
-	sort Graph .
 
-	op gp : IntMatrix -> Graph [ctor] .
-	op ag : Nat Map{Nat, Nat} -> Agent [ctor] .
-
-endfm
-
-view Agent from TRIV to NEEDED-SORT is
-  sort Elt to Agent .
-endv
-view Graph from TRIV to NEEDED-SORT is
-  sort Elt to Graph .
-endv
 
 mod MODELO is
 	pr SAMPLER .

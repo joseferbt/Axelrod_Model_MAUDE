@@ -1,32 +1,11 @@
-load sampler .
+load graphs .
+
 set clear rules off .
-
-load matrix .
-
-fmod NEEDED-SORT is
-	pr MAP{Nat, Nat} .
-	pr INT-MATRIX .
-	inc NAT .
-  inc INT .
-  inc FLOAT .
-	sort Agent .
-	sort Graph .
-
-	op gp : IntMatrix -> Graph [ctor] .
-	op ag : Nat Map{Nat, Nat} -> Agent [ctor] .
-
-endfm
-
-view Agent from TRIV to NEEDED-SORT is
-  sort Elt to Agent .
-endv
-view Graph from TRIV to NEEDED-SORT is
-  sort Elt to Graph .
-endv
 
 mod MODELO is
 	pr SAMPLER .
-	pr SET{IndexPair} .
+---	pr SET{Nat} .
+---	pr SET{IndexPair} .
 	pr SET{Agent} .
 	sort State .
 
@@ -75,14 +54,7 @@ mod MODELO is
 	eq countEquals(ag(N, ((I |-> L), B)), O, ag(M, ((I |-> L), C))) = O + 1.0 + countEquals(ag(N, B), O, ag(M, C)) .
 	eq countEquals(ag(N, empty), O, ag(M, empty)) = 0.0 .
 
----(
-	op inlist : Set{Agent} Nat -> Bool .
-	eq inlist((LA, ag(I, B)), I) = true .
-	eq inlist(LA, I) = false [owise] .
-	eq idAgent(ag(I, B)) = I .
-)
 --- is a boolean oeration that is true if the difference betwen two features of an agent is iqual or less than a.
-
 	op threshold : Nat Nat -> Bool .
 	eq threshold(I, J) = if abs(J - I) <= a and abs(J - I) > 0 then true else false fi .
 
