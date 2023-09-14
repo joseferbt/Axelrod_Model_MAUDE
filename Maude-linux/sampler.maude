@@ -16,6 +16,7 @@ rl sampleBernoulli(P) => (randF < P) .
 
  --- Generate a random natural number in interval [Min, Max]
  op genRandom : Nat Nat -> Nat   .
- eq genRandom(Min, Max) = (rand rem ((Max - Min) + 1)) + Min .
+ eq genRandom(Min, Max) = if Max == 0 then 0 else (rand rem ((Max - Min) + 1)) + Min fi .
+
 
 endm
