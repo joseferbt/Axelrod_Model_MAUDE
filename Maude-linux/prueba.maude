@@ -12,8 +12,8 @@ mod MODELO is
 
 	op f : -> Float .
 	ops a t n : -> Nat .
-	eq a = 10 .
-	eq f = 3.0 .
+	eq a = 1 .
+	eq f = 4.0 .
 	eq t = 5 .
 	eq n = | AL | .
 	ops AgentList sol : -> Set{Agent} .
@@ -50,11 +50,13 @@ mod MODELO is
 
 --- calculate which is the probability of two agents to interact
 	op proSelect : Agent Agent -> Float .
-	eq proSelect( A, A' ) =  f / countEquals( A, 0.0, A' ) .
+	ceq proSelect( A, A' ) = countEquals( A, 0.0, A' ) / f  if countEquals( A, 0.0, A' ) > 0.0 .
+	eq proSelect(A, A') = 0.0 [owise] .
 
 --- is an auxiliar function that count how many equals features has two agents
   op countEquals : Agent  Float Agent -> Float .
 	eq countEquals(ag(N, ((I |-> L), B)), O, ag(M, ((I |-> L), C))) = O + 1.0 + countEquals(ag(N, B), O, ag(M, C)) .
+	eq countEquals(ag(N, ((I |-> L), B)), O, ag(M, ((I |-> J), C))) = if threshold(L,J) then O + 1.0 + countEquals(ag(N, B), O, ag(M, C)) else 0.0 + countEquals(ag(N, B), O, ag(M, C)) fi .
 	eq countEquals(ag(N, empty), O, ag(M, empty)) = 0.0 .
 
 --- is a boolean oeration that is true if the difference betwen two features of an agent is iqual or less than a.
@@ -63,8 +65,8 @@ mod MODELO is
 
 --- is a exchange of an index feature information betwen two agents.
 	op changeFeature : Agent Agent Nat -> Agent .
-	eq changeFeature(ag(I, ((J |-> L), B)), ag(K, ((J |-> N), C)), J) =  ag(I, ((J |-> N), B)) [print J].
-	eq changeFeature(A, A', 0) = A .
+	eq changeFeature(ag(I, ((J |-> L), B)), ag(K, ((J |-> N), C)), J) =  if  sampleBernoulli(proSelect(ag(I, ((J |-> L), B)), ag(K, ((J |-> N), C)))) then ag(I, ((J |-> N), B)) else ag(I, ((J |-> L), B)) fi .
+	eq changeFeature(A, A', 0) = A  .
 	eq changeFeature(A, empty, N) = A .
 
 	--- selects the features that are not common but under the threshold
