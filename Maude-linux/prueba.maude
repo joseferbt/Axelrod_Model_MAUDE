@@ -1,4 +1,4 @@
-load graphs .
+load needed .
 
 set clear rules off .
 set print attribute on .
@@ -107,7 +107,7 @@ mod MODELO is
 
 --- is an auxiliar function that change a random not common feature between two agents
 	op auxFeatures : Agent Agent -> Agent .
-	eq auxFeatures(A, A') = changeFeature(A, A', selectFeature(availableFeature(A, A'), genRandom(1, | availableFeature(A, A') | ))).
+	eq auxFeatures(A, A') = changeFeature(A, A', selectFeature(availableFeature(A, A'), genRandom(1, | availableFeature(A, A') | ))) .
 
 	var R : Int .
 	op checkLeng : Int -> Nat .
@@ -115,7 +115,31 @@ mod MODELO is
 
 	op resultAgents : State -> Set{Agent} .
 	eq resultAgents(< G, LA, 0 >) = LA .
-
+	
+	op genAgents : Nat Nat Nat -> Set{Agent} .
+	ceq genAgents(I, J, K) = ag(I, genFeatures(J, K)), genAgents(I - 1, J, K) if I > 0 .
+	eq genAgents(0, J, K) = empty [owise] .
+	 
+	op genFeatures : Nat Nat -> Map{Nat, Nat} .
+	ceq genFeatures(N, J) = N |-> genRandom(1, J), genFeatures(N - 1, J) if N > 0 .
+	eq genFeatures(0, J)= empty [owise] . 
+	
+	op genGG : Nat Nat -> Graph . 
+	ceq genGG(N, J) = ed(N, genGGN(N, J)), genGG(N - 1, J) if N > 0 .
+	eq genGG(0, J) = empty [owise].
+	
+	op genGGN : Nat Nat -> Set{Nat} .
+	ceq genGGN(N, J) = if J == N then genGGN(N,J - 1) else J, genGGN(N,J - 1) fi if J > 0 .
+	eq genGGN(N, 0) = empty [owise] .
+	
+	---(
+	op genERG : Nat Float -> Graph .
+	ceq genERG(N, O) = ed(N, genNeighbors(N, J)), genGG(N - 1, J) if N > 0 .
+	eq genERG(0, O) = empty [owise].
+	
+	op genERGN
+	)
+	
  crl [inte] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
 
 endm
