@@ -1,0 +1,17 @@
+load needed .
+
+fmod COMPLETE_G is
+	pr SET{Nat} .
+	pr SET{Graph} .
+
+	var N : Nat .
+
+	op completeGraph : Nat -> Graph .
+	eq completeGraph(s(N)) = ed(s(N), allNeigbors(s(N))), completeGraph(N) .	
+	eq completeGraph(1) = empty .
+	
+	op allNeigbors : Nat -> Set{Nat} . 
+	eq allNeigbors(s(N)) = s(N), allNeighbors(N) .
+	eq allNeigbors(1) = empty .  
+endfm
+

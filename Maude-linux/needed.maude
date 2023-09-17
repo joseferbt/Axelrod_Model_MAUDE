@@ -1,0 +1,44 @@
+load sampler .
+
+fmod NEEDED-SORT is
+	pr SET{Nat} .
+	pr MAP{Nat, Nat} .
+	inc NAT .
+  	inc INT .
+  	inc FLOAT .
+
+	sort Agent .
+  	sort Graph .
+  	sort Edge .
+  	subsort Nat < Edge < Graph .
+
+	op ed : Nat Nat -> Edge [ctor assoc comm].
+	op empty : -> Graph [ctor].
+	op _, _ : Graph Graph -> Graph [ctor assoc comm id: empty prec 121 format (d r os d)] .
+	op ag : Nat Map{Nat, Nat} -> Agent [ctor] .
+	
+	var E : Edge .
+	var G : Graph .
+	vars N I K J : Nat . 
+	
+	op _on_ : Nat Graph -> Bool .
+	eq N on (ed(N, J), G) = true .
+	eq N on (ed(I, N), G) = true .
+	eq N on G = false [owise] .
+	
+	op _in_ : Edge Graph -> Bool .
+	eq ed(I, J) in (ed(I, J), G) = true .
+	eq  ed(I, J) in G = false [owise] .
+	
+	
+	
+		
+endfm 
+
+view Graph from TRIV to NEEDED-SORT is
+  sort Elt to Graph .
+endv 
+
+view Agent from TRIV to NEEDED-SORT is
+  sort Elt to Agent .
+endv
