@@ -21,7 +21,7 @@ mod MODELO is
 	op AL : -> Set{Agent} .
   eq AL = ag(1, (4 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(2, (4 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(3, (4 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3)),  ag(4, (4 |-> 4, 1 |-> 1, 2 |-> 2, 3 |-> 2)) .
 	ops GRAFO baraGp : -> Graph .
-	eq GRAFO = ed(1, 2), ed(1,4), ed(1,3), ed(2,3), ed(2,4), ed(3,4) .
+	eq GRAFO = ed(1, 2), ed(1,4), ed(1,3), ed(2,3), ed(2,4) .
 	eq baraGp = ed(1, 2), ed(1,4), ed(1,3) .
 
 	--- Represents the state of the model how has change over n itterations
@@ -129,10 +129,8 @@ mod MODELO is
 	ceq genFeatures(N, J) = N |-> genRandom(1, J), genFeatures(N - 1, J) if N > 0 .
 	eq genFeatures(0, J)= empty [owise] . 
 	
-	
 	op genEAux[_|_|_] : Nat Float Nat  -> Graph .
 	ceq genEAux[N | O | J] = if sampleBernoulli(O)  then ed(N,J), genEAux[N | O | J - 1] else genEAux[N | O | J - 1] fi if J > N .
-	
 	eq genEAux[N | O | J ] = empty [owise ].
 	
 	op genGraphs : Nat Float Nat -> Graph .
@@ -143,8 +141,16 @@ mod MODELO is
 	eq genBAG(N, (ed(I, J),G), O) = if sampleBernoulli(proBA(G, N)) then  G, genBAG(N - 1, G , O) else G fi .
 	eq genBAG(0, G, O) = empty [owise] . 
 	
+	op auxBAG : Graph Set{Nat} Nat -> Graph .
+	eq auxBAG(G, (N,T), J) = if sampleBernoulli(proBA(G,N)) then ed(N,J), auxBAG(G,T,J) else auxBAG(G,T,J) fi .
+	
+	--- list all existing Agents Id with an edge 
+	op nodeEdge : Graph -> Set{Nat} .
+	eq nodeEdge((ed(N,J),G)) = N, J, nodeEdge(G) .
+	eq nodeEdge((ed(N,J), empty)) = N, J [owise] .
+	 
 	op proBA : Graph Nat -> Float .
-	---eq proBA(G, N) = | getNeighbors(G, N) | / 
+	eq proBA(G, N) = nodeDegre(G,N) / allNDegre(G,1) .
 	
 	op countFloat : Set{Nat} -> Float .
 	eq countFloat((N, T)) = 1.0 + countFloat(T) .
@@ -155,6 +161,10 @@ mod MODELO is
 	eq nodeDegre((ed(J,I),G),N) = nodeDegre(G,N) .
 	eq nodeDegre((ed(N,I),empty), N) = 1.0 .
 	eq nodeDegre((ed(J,I),(empty).Graph), N) = 0.0 .
+	
+	op allNDegre : Graph Nat -> Float .
+	eq allNDegre(G,N) = if N on G then nodeDegre(G,N) + allNDegre(G,N + 1) else 0.0 fi .
+		
 	
 	
 	

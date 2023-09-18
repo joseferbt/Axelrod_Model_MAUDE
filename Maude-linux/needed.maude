@@ -20,6 +20,8 @@ fmod NEEDED-SORT is
 	var E : Edge .
 	var G : Graph .
 	vars N I K J : Nat . 
+	var O : Float .
+	var T : Set{Nat}.
 	
 	op _on_ : Nat Graph -> Bool .
 	eq N on (ed(N, J), G) = true .
@@ -31,9 +33,7 @@ fmod NEEDED-SORT is
 	eq ed(I, J) in ed(I, J) = true .
 	eq  ed(I, J) in G = false [owise] .
 	
-	
-	
-		
+			
 endfm 
 
 view Graph from TRIV to NEEDED-SORT is
