@@ -23,11 +23,12 @@ fmod NEEDED-SORT is
 	
 	op _on_ : Nat Graph -> Bool .
 	eq N on (ed(N, J), G) = true .
-	eq N on (ed(I, N), G) = true .
+	eq N on (ed(N, J)) = true .
 	eq N on G = false [owise] .
 	
 	op _in_ : Edge Graph -> Bool .
 	eq ed(I, J) in (ed(I, J), G) = true .
+	eq ed(I, J) in ed(I, J) = true .
 	eq  ed(I, J) in G = false [owise] .
 	
 	
