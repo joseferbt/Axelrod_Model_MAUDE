@@ -9,13 +9,16 @@ mod MODELO is
 ---	pr SET{IndexPair} .
 	pr SET{Agent} .
 	sort State .
+	
+	
 
 	op f : -> Float .
-	ops a t n : -> Nat .
+	ops a t n m : -> Nat .
 	eq a = 1 .
 	eq f = 4.0 .
 	eq t = 5 .
 	eq n = | AL | .
+	eq m = 2 . --- number of edges for barabasi graph
 	ops AgentList sol : -> Set{Agent} .
 
 	op AL : -> Set{Agent} .
@@ -137,9 +140,9 @@ mod MODELO is
 	ceq genGraphs(N, O, I) = genEAux[N | O | I], genGraphs(N - 1, O, I) if N > 0 .
 	eq genGraphs(0, O, I) = empty .
 	
-	---(op genBAG : Nat Graph Nat -> Graph .
-	eq genBAG(N, (ed(I, J),G), M) = if | auxBAG((ed(I, J),G),nodeEdge) | < M then  G, genBAG(N - 1, G , O) else G fi .
-	eq genBAG(0, G, M) = empty [owise] .  )
+	op genBAG : Nat Graph Nat Nat -> Graph .
+	eq genBAG(N, G, M, K) = genBAG(N + 1, (G, mEdgeAdd(G,nodeEdge(G),N,M,empty)), M, K) [owise].
+	ceq genBAG(N,G,M,K) =  G, mEdgeAdd(G,nodeEdge(G),N,M,empty) if N == K . 
 	
 	--- auxBAG returns posible new edges for the graph based on an initial graph G and a list of Agents ID's T
 	op auxBAG : Graph Set{Nat} Nat Nat -> Graph .
@@ -148,7 +151,7 @@ mod MODELO is
 	eq auxBAG(G,empty,J, 0) = empty .
 	eq auxBAG(G,empty,J, M) = empty .
 	
-	
+	--- gives a graph with M edges for an agent N
 	op mEdgeAdd : Graph Set{Nat} Nat Nat Graph -> Graph .
 	eq mEdgeAdd(G, T, N, M, G') = if | G' | >= M then pick(G', M) else mEdgeAdd(G, T, N, M, auxBAG(G, T, N, M )) fi .
 	eq mEdgeAdd(G, T, N, M, empty) = mEdgeAdd(G, T, N, M, auxBAG(G, T, N, M )) .
@@ -167,10 +170,6 @@ endm
 
 ---(
 	rew < GRAFO, AL, 2 > .
-	rew auxBAG(GRAFO, nodeEdge(GRAFO),5,2,0) .
- 	rew availableFeature(ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 3, 2 |-> 4, 3 |-> 1))) .
-	rew getNeighbors(GRAFO, 0) .
-	rew getAgent((ag(0, (0 |-> 1, 1 |-> 2, 2 |-> 3, 3 |-> 4)), ag(1, (0 |-> 3, 1 |-> 3, 2 |-> 4, 3 |-> 1)), ag(2, (0 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3))), (1, 2)) .
-	rew selectFeature(getNeighbors(GRAFO, 4), genRandom(1, | getNeighbors(GRAFO, 4) |)) .
-
-	rew selectFeature(availableFeature(ag(2, (4 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(3, (4 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3))), genRandom(1, | availableFeature(ag(2, (4 |-> 3, 1 |-> 4, 2 |-> 4, 3 |-> 1)), ag(3, (4 |-> 2, 1 |-> 3, 2 |-> 1, 3 |-> 3)))  | )) .
+	rew mEdgeAdd(GRAFO,nodeEdge(GRAFO),5,2,empty) .
+	
+ 	)
