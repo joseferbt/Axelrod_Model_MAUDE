@@ -33,6 +33,35 @@ fmod NEEDED-SORT is
 	eq ed(I, J) in ed(I, J) = true .
 	eq  ed(I, J) in G = false [owise] .
 	
+	op |_| : Graph -> Nat .
+	eq | (ed(I,J),G) | = 1 + | G | .
+	eq | ed(I,J),empty | = 1 .	 
+	
+	op pick : Graph Nat -> Graph .
+	ceq pick((ed(N,J),G),I) = ed(N,J), pick(G,I - 1) if I > 1 .
+	eq pick((ed(N,J),G),1) = ed(N,J) .
+	eq pick((ed(N,J),empty),1) = ed(N,J) .
+	
+	--- list all existing Agents Id with an edge 
+	op nodeEdge : Graph -> Set{Nat} .
+	eq nodeEdge((ed(N,J),G)) = N, J, nodeEdge(G) .
+	eq nodeEdge((ed(N,J), empty)) = N, J [owise] .
+	
+	op proBA : Graph Nat -> Float .
+	eq proBA(G, N) = nodeDegre(G,N) / allNDegre(G,1) .
+	
+	op countFloat : Set{Nat} -> Float .
+	eq countFloat((N, T)) = 1.0 + countFloat(T) .
+	eq countFloat(empty) = 0.0 .
+	
+	op nodeDegre : Graph Nat -> Float .
+	eq nodeDegre((ed(N,I),G),N) = 1.0 + nodeDegre(G,N) .
+	eq nodeDegre((ed(J,I),G),N) = nodeDegre(G,N) .
+	eq nodeDegre((ed(N,I),empty), N) = 1.0 .
+	eq nodeDegre((ed(J,I),(empty).Graph), N) = 0.0 .
+	
+	op allNDegre : Graph Nat -> Float .
+	eq allNDegre(G,N) = if N on G then nodeDegre(G,N) + allNDegre(G,N + 1) else 0.0 fi .
 			
 endfm 
 
