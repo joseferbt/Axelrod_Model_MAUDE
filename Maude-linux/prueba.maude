@@ -5,13 +5,9 @@ set print attribute on .
 
 mod MODELO is
 	pr SAMPLER .
----	pr SET{Nat} .
----	pr SET{IndexPair} .
 	pr SET{Agent} .
 	sort State .
 	
-	
-
 	op f : -> Float .
 	ops a t n m : -> Nat .
 	eq a = 1 .
@@ -37,9 +33,7 @@ mod MODELO is
 	vars H I J K L M N : Nat .
 	vars E E' : Edge .
 	vars B C : Map{Nat, Nat} .
----	vars T T' : Set{IndexPair} .
----	var P : IndexPair .
-	var O : Float .
+	var O Q R : Float .
 
 --- select a index over a list of index .
 	op selectFeature : Set{Nat} Nat -> Nat .
@@ -72,13 +66,16 @@ mod MODELO is
 	eq changeFeature(ag(I, ((J |-> L), B)), ag(K, ((J |-> N), C)), J) =  if  sampleBernoulli(proSelect(ag(I, ((J |-> L), B)), ag(K, ((J |-> N), C)))) then ag(I, ((J |-> N), B)) else ag(I, ((J |-> L), B)) fi .
 	eq changeFeature(A, A', 0) = A  .
 	eq changeFeature(A, empty, N) = A .
+	
+	--- is an auxiliar function that change a random not common feature between two agents
+	op auxFeatures : Agent Agent -> Agent .
+	eq auxFeatures(A, A') = changeFeature(A, A', selectFeature(availableFeature(A, A'), genRandom(1, | availableFeature(A, A') | ))) .
 
 	--- selects the features that are not common but under the threshold
 	op availableFeature : Agent Agent -> Set{Nat} .
 	eq availableFeature(ag(I, ((J |-> L), B)), ag(M, ((J |-> N), C))) = if threshold(L, N) then J, availableFeature(ag(I, B), ag(M, C)) else availableFeature(ag(I, B), ag(M, C)) fi .
 	eq availableFeature(ag(I, empty), ag(J, empty)) = empty .
 	eq availableFeature(A, ag(J, empty)) = empty .
-
 
 	--- gives an agent that has a index I
 	op getAgent : Set{Agent} Nat -> Agent .
@@ -94,32 +91,13 @@ mod MODELO is
 	op delAgent : Set{Agent} Agent -> Set{Agent} .
 	eq delAgent((LA,ag(I, B) ), ag(I, B)) = LA .
 
-	--- gives the neighbors of an agent with index I.
-	op getNeighbors : Graph Nat -> Set{Nat} .
-	eq getNeighbors((ed(J, I), G) , J) = I , getNeighbors(G, J) .
-	eq getNeighbors((ed(J, I), G) , I) = J , getNeighbors(G, I) .
-	eq getNeighbors((ed(J, I), empty) , J) = I .
-	eq getNeighbors((ed(J, I), empty) , I) = J .
-	eq getNeighbors(G, I) = empty [owise].
-
-
-
 	---takes a graph and a list of agents s an agent and from it gets it's neighbors, select one randomly and then gets all posible features and ramdomly select one to exchange value.
 	op update : Graph Set{Agent} -> Set{Agent} .
 	eq update(G, LA) = auxUpdate(G, LA, getRAgent(LA)) .
-
-
+	
 ---
 	op auxUpdate : Graph Set{Agent} Agent -> Set{Agent} .
 	eq auxUpdate(G, LA, ag(I, B)) = delAgent(LA, ag(I, B)), auxFeatures(ag(I,B), selectNeighbor(LA, selectFeature(getNeighbors(G, I), genRandom(1, | getNeighbors(G, I) |)))) .
-
---- is an auxiliar function that change a random not common feature between two agents
-	op auxFeatures : Agent Agent -> Agent .
-	eq auxFeatures(A, A') = changeFeature(A, A', selectFeature(availableFeature(A, A'), genRandom(1, | availableFeature(A, A') | ))) .
-
-	var R : Int .
-	op checkLeng : Int -> Nat .
-	eq checkLeng(R)= if 0 > R then 0 else R fi .
 
 	op resultAgents : State -> Set{Agent} .
 	eq resultAgents(< G, LA, 0 >) = LA .
@@ -132,6 +110,8 @@ mod MODELO is
 	ceq genFeatures(N, J) = N |-> genRandom(1, J), genFeatures(N - 1, J) if N > 0 .
 	eq genFeatures(0, J)= empty [owise] . 
 	
+------------------- Compete O=1 and Erdos Renyi O < 1 ------------------------------------	
+	
 	op genEAux[_|_|_] : Nat Float Nat  -> Graph .
 	ceq genEAux[N | O | J] = if sampleBernoulli(O)  then ed(N,J), genEAux[N | O | J - 1] else genEAux[N | O | J - 1] fi if J > N .
 	eq genEAux[N | O | J ] = empty [owise ].
@@ -139,6 +119,9 @@ mod MODELO is
 	op genGraphs : Nat Float Nat -> Graph .
 	ceq genGraphs(N, O, I) = genEAux[N | O | I], genGraphs(N - 1, O, I) if N > 0 .
 	eq genGraphs(0, O, I) = empty .
+	
+	
+--------------- Barabasi Albert Model --------------------------------------
 	
 	op genBAG : Nat Graph Nat Nat -> Graph .
 	eq genBAG(N, G, M, K) = genBAG(N + 1, (G, mEdgeAdd(G,nodeEdge(G),N,M,empty)), M, K) [owise].
@@ -156,12 +139,36 @@ mod MODELO is
 	eq mEdgeAdd(G, T, N, M, G') = if | G' | >= M then pick(G', M) else mEdgeAdd(G, T, N, M, auxBAG(G, T, N, M )) fi .
 	eq mEdgeAdd(G, T, N, M, empty) = mEdgeAdd(G, T, N, M, auxBAG(G, T, N, M )) .
 	
-	 
+---------------------Watts-Strogatz Model --------------------------------------
 	
+	op k : -> Nat . --- node Degree
+	eq k = 2 .
+	
+	op genWSG : Graph Graph Nat Nat -> Graph .
+	eq genWSG(G',(G, ed(K,L)), N, I) = if sampleBernoulli((1.0 / (nTf((I - N))))) then genWSG(selectWSG(G',ed(K,L),ed(K, genRandom(1,I)),N),G,N,I) else genWSG(G',G,N,I) fi .
+	eq genWSG(G',(empty, ed(K,L)), N, I) = if sampleBernoulli(0.5) then genWSG(selectWSG(G',ed(K,L),ed(K, genRandom(1,I)),N),empty,N,I) else genWSG(G',empty,N,I) fi .
+	eq genWSG(G', empty ,N, I) = G'	 .
+	
+
+	op selectWSG : Graph Edge Edge Nat -> Graph .
+	eq selectWSG(G,ed(I,J),ed(I,K),N) = if  (ed(I,K) in G or K == I) then selectWSG(G,ed(I,J),ed(I,genRandom(1,N)),N) else exchangeWSG(G,ed(I,J),ed(I,K)) fi .
+	
+	--- elimina el edge E y anade el E' al grafo G
+	op exchangeWSG : Graph Edge Edge ->  Graph .
+	eq exchangeWSG(G, E, E') = delEdge(G,E), E' .
+	
+	--- gives the initial state for watts stogatz model
+	op auxWSG : Nat Nat Nat -> Graph .
+	ceq auxWSG(N, I, J) =  nearWSGB(I,J,N,1), nearWSGF(I,J,N,1,1), auxWSG(N, I - 1, J)  if I > 0 .
+	eq auxWSG(N,0,J) = empty .	
+	
+	op nearWSGB : Nat Nat Nat Nat -> Graph .
+	ceq nearWSGB(I, J, N, K) = if I - N / 2 > 0 then ed(I,I - K), nearWSGB(I, J,N - 2,K + 1) else ed(I,J), nearWSGB(I,J - 1, N - 2, K) fi if N > 0 .
+	eq nearWSGB(I,J,0, K) = empty .
 		
-	
-	
-	
+	op nearWSGF : Nat Nat Nat Nat Nat -> Graph .
+	ceq nearWSGF(I, J, N, K, L) = if I + K <= J then ed(I,I + K), nearWSGF(I, J,N - 2,K + 1,L) else ed(I,L), nearWSGF(I,L, N - 2,K,L + 1) fi if N > 0 .
+	eq nearWSGF(I,J,0,K,L) = empty .
 		
  crl [inte] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
 
@@ -169,7 +176,19 @@ endm
 
 
 ---(
+rew genWSG(auxWSG(2,15,15),auxWSG(2,15,15),2,15) .
+
+
 	rew < GRAFO, AL, 2 > .
 	rew mEdgeAdd(GRAFO,nodeEdge(GRAFO),5,2,empty) .
 	
+
+op rewireEdges : Nat Real -> Graph .
+  eq rewireEdges(K, P) = if P <= 0 then empty else rewireAllEdges(P, K) fi .
+
+  op rewireAllEdges : Real Nat -> Graph .
+  eq rewireAllEdges(P, K) = if P <= 0 then empty else rewireEdge(P, K) ∪ rewireAllEdges(P - 1, K) fi .
+
+  op rewireEdge : Real Nat -> Graph .
+  eq rewireEdge(P, K) = if RandomValue(P) == 1 then rewire(K) else K fi .
  	)

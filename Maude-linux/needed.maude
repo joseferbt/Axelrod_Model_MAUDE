@@ -17,10 +17,14 @@ fmod NEEDED-SORT is
 	op _, _ : Graph Graph -> Graph [ctor assoc comm id: empty prec 121 format (d r os d)] .
 	op ag : Nat Map{Nat, Nat} -> Agent [ctor] .
 	
+	eq ed(I,J),ed(I,J) = ed(I,J) .
+	eq ed(I,J),ed(J,I) = ed(I,J) .
+	
 	var E : Edge .
 	var G : Graph .
-	vars N I K J : Nat . 
-	var O : Float .
+	vars N I K J L : Nat . 
+	var O Q W : Float .
+	var A A' : Agent .
 	var T : Set{Nat}.
 	
 	op _on_ : Nat Graph -> Bool .
@@ -37,6 +41,7 @@ fmod NEEDED-SORT is
 	eq | (ed(I,J),G) | = 1 + | G | .
 	eq | ed(I,J),empty | = 1 .	 
 	
+--- seleciona I edges in a Graph 
 	op pick : Graph Nat -> Graph .
 	ceq pick((ed(N,J),G),I) = ed(N,J), pick(G,I - 1) if I > 1 .
 	eq pick((ed(N,J),G),1) = ed(N,J) .
@@ -60,9 +65,37 @@ fmod NEEDED-SORT is
 	eq nodeDegre((ed(N,I),empty), N) = 1.0 .
 	eq nodeDegre((ed(J,I),(empty).Graph), N) = 0.0 .
 	
+	op degreAd : Graph Set{Nat} -> Float .
+	eq degreAd(G, (N,T)) = (nodeDegre(G,N) / nTf(| G |)) + degreAd(G,T) .
+	eq degreAd(G, empty) = 0.0 .
+		
 	op allNDegre : Graph Nat -> Float .
 	eq allNDegre(G,N) = if N on G then nodeDegre(G,N) + allNDegre(G,N + 1) else 0.0 fi .
+	
+	--- gives the neighbors of an agent with index I.
+	op getNeighbors : Graph Nat -> Set{Nat} .
+	eq getNeighbors((ed(J, I), G) , J) = I , getNeighbors(G, J) .
+	eq getNeighbors((ed(J, I), G) , I) = J , getNeighbors(G, I) .
+	eq getNeighbors((ed(J, I), empty) , J) = I .
+	eq getNeighbors((ed(J, I), empty) , I) = J .
+	eq getNeighbors(G, I) = empty [owise] .
+	
+	op delEdge : Graph Edge -> Graph .
+	eq delEdge((ed(I,J), G), ed(I,J)) = G .
 			
+	op nTf : Nat -> Float .
+	eq nTf(s(N)) = 1.0 + nTf(N) .
+	eq nTf(0) = 0.0 .
+
+	
+	op equalDegre : Float Float Float -> Bool .
+	eq equalDegre(O,Q,W) = not (O =[1.0e-1] W and Q =[1.0e-1] W ) .
+
+	var R : Int .
+	op checkLeng : Int -> Nat .
+	eq checkLeng(R)= if 0 > R then 0 else R fi .
+	
+	
 endfm 
 
 view Graph from TRIV to NEEDED-SORT is
