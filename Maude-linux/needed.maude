@@ -25,9 +25,9 @@ fmod NEEDED-SORT is
 	vars N I K J L : Nat . 
 	var O Q W : Float .
 	var A A' : Agent .
-	var T : Set{Nat}.
+	var T : Set{Nat} .
 	
-	op _on_ : Nat Graph -> Bool .
+	op _on_ : Nat Graph -> Bool [memo] .
 	eq N on (ed(N, J), G) = true .
 	eq N on (ed(N, J)) = true .
 	eq N on G = false [owise] .
@@ -48,7 +48,7 @@ fmod NEEDED-SORT is
 	eq pick((ed(N,J),empty),1) = ed(N,J) .
 	
 	--- list all existing Agents Id with an edge 
-	op nodeEdge : Graph -> Set{Nat} .
+	op nodeEdge : Graph -> Set{Nat} [memo].
 	eq nodeEdge((ed(N,J),G)) = N, J, nodeEdge(G) .
 	eq nodeEdge((ed(N,J), empty)) = N, J [owise] .
 	
@@ -59,7 +59,7 @@ fmod NEEDED-SORT is
 	eq countFloat((N, T)) = 1.0 + countFloat(T) .
 	eq countFloat(empty) = 0.0 .
 	
-	op nodeDegre : Graph Nat -> Float .
+	op nodeDegre : Graph Nat -> Float [memo] .
 	eq nodeDegre((ed(N,I),G),N) = 1.0 + nodeDegre(G,N) .
 	eq nodeDegre((ed(J,I),G),N) = nodeDegre(G,N) .
 	eq nodeDegre((ed(N,I),empty), N) = 1.0 .
@@ -69,7 +69,7 @@ fmod NEEDED-SORT is
 	eq degreAd(G, (N,T)) = (nodeDegre(G,N) / nTf(| G |)) + degreAd(G,T) .
 	eq degreAd(G, empty) = 0.0 .
 		
-	op allNDegre : Graph Nat -> Float .
+	op allNDegre : Graph Nat -> Float [memo] .
 	eq allNDegre(G,N) = if N on G then nodeDegre(G,N) + allNDegre(G,N + 1) else 0.0 fi .
 	
 	--- gives the neighbors of an agent with index I.

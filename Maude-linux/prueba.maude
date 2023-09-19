@@ -1,5 +1,8 @@
 load needed .
 
+do clear memo .
+
+
 set clear rules off .
 set print attribute on .
 
@@ -102,18 +105,20 @@ mod MODELO is
 	op resultAgents : State -> Set{Agent} .
 	eq resultAgents(< G, LA, 0 >) = LA .
 	
+	--- generate I agents with J features with K treats
 	op genAgents : Nat Nat Nat -> Set{Agent} .
 	ceq genAgents(I, J, K) = ag(I, genFeatures(J, K)), genAgents(I - 1, J, K) if I > 0 .
 	eq genAgents(0, J, K) = empty [owise] .
 	 
 	op genFeatures : Nat Nat -> Map{Nat, Nat} .
-	ceq genFeatures(N, J) = N |-> genRandom(1, J), genFeatures(N - 1, J) if N > 0 .
-	eq genFeatures(0, J)= empty [owise] . 
+	ceq genFeatures(J, K) = J |-> genRandom(1, K), genFeatures(J - 1, K) if J > 0 .
+	eq genFeatures(0, K)= empty [owise] . 
 	
 ------------------- Compete O=1 and Erdos Renyi O < 1 ------------------------------------	
 	
 	op genEAux[_|_|_] : Nat Float Nat  -> Graph .
 	ceq genEAux[N | O | J] = if sampleBernoulli(O)  then ed(N,J), genEAux[N | O | J - 1] else genEAux[N | O | J - 1] fi if J > N .
+	ceq genEAux[N | 1.0 | J] = ed(N,J), genEAux[N | 1.0	 | J - 1]  if J > N .
 	eq genEAux[N | O | J ] = empty [owise ].
 	
 	op genGraphs : Nat Float Nat -> Graph .
@@ -122,14 +127,14 @@ mod MODELO is
 	
 	
 --------------- Barabasi Albert Model --------------------------------------
-	
+----  generates a Barabasi graph with K agents with M new nodes 
 	op genBAG : Nat Graph Nat Nat -> Graph .
-	eq genBAG(N, G, M, K) = genBAG(N + 1, (G, mEdgeAdd(G,nodeEdge(G),N,M,empty)), M, K) [owise].
-	ceq genBAG(N,G,M,K) =  G, mEdgeAdd(G,nodeEdge(G),N,M,empty) if N == K . 
+	eq genBAG(N, G, M, K) = genBAG(N + 1, (G, auxBAG(G,nodeEdge(G),N,M)), M, K) [owise].
+	ceq genBAG(N,G,M,K) =  G, auxBAG(G,nodeEdge(G),N,M) if N == K . 
 	
 	--- auxBAG returns posible new edges for the graph based on an initial graph G and a list of Agents ID's T
 	op auxBAG : Graph Set{Nat} Nat Nat -> Graph .
-	ceq auxBAG(G, (N,T), J, M) = if sampleBernoulli(proBA(G,N)) then ed(N,J), auxBAG(G,T,J,M - 1) else auxBAG(G,T,J,M) fi if M > 0 .
+	ceq auxBAG(G, (N,T), J, M) = if sampleBernoulli(proBA(G,N)) and not N == J then ed(N,J), auxBAG(G,T,J,M - 1) else auxBAG(G,T,J,M) fi if M > 0 .
 	eq auxBAG(G,T,J,0) = empty .
 	eq auxBAG(G,empty,J, 0) = empty .
 	eq auxBAG(G,empty,J, M) = empty .
@@ -143,10 +148,10 @@ mod MODELO is
 	
 	op k : -> Nat . --- node Degree
 	eq k = 2 .
-	
+--- generates a watts graph with N degre for initial set over I agents
 	op genWSG : Graph Graph Nat Nat -> Graph .
 	eq genWSG(G',(G, ed(K,L)), N, I) = if sampleBernoulli((1.0 / (nTf((I - N))))) then genWSG(selectWSG(G',ed(K,L),ed(K, genRandom(1,I)),N),G,N,I) else genWSG(G',G,N,I) fi .
-	eq genWSG(G',(empty, ed(K,L)), N, I) = if sampleBernoulli(0.5) then genWSG(selectWSG(G',ed(K,L),ed(K, genRandom(1,I)),N),empty,N,I) else genWSG(G',empty,N,I) fi .
+	eq genWSG(G',(empty, ed(K,L)), N, I) = if sampleBernoulli((1.0 / (nTf((I - N))))) then genWSG(selectWSG(G',ed(K,L),ed(K, genRandom(1,I)),N),empty,N,I) else genWSG(G',empty,N,I) fi .
 	eq genWSG(G', empty ,N, I) = G'	 .
 	
 
@@ -163,23 +168,48 @@ mod MODELO is
 	eq auxWSG(N,0,J) = empty .	
 	
 	op nearWSGB : Nat Nat Nat Nat -> Graph .
-	ceq nearWSGB(I, J, N, K) = if I - N / 2 > 0 then ed(I,I - K), nearWSGB(I, J,N - 2,K + 1) else ed(I,J), nearWSGB(I,J - 1, N - 2, K) fi if N > 0 .
+	ceq nearWSGB(I, J, N, K) = if (I - (N / 2)) > 0 then ed(I,I - K), nearWSGB(I, J,N - 2,K + 1) else ed(I,J), nearWSGB(I,J - 1, N - 2, K) fi if N > 0 .
 	eq nearWSGB(I,J,0, K) = empty .
 		
 	op nearWSGF : Nat Nat Nat Nat Nat -> Graph .
 	ceq nearWSGF(I, J, N, K, L) = if I + K <= J then ed(I,I + K), nearWSGF(I, J,N - 2,K + 1,L) else ed(I,L), nearWSGF(I,L, N - 2,K,L + 1) fi if N > 0 .
 	eq nearWSGF(I,J,0,K,L) = empty .
-		
+	
+---------------------------------------- lattice 2d ----------------------------
+---- generates a 2d-lattice network for N J agents this is A N*N space .
+	op genLatt : Nat Nat Nat -> Graph .
+	ceq genLatt(I,J,N) =  inLatt(I,N),genLatt(I - 1,J,N) if I > N and ((I rem N) > 1) and I < J - N .
+	ceq genLatt(I,J,N) =  ed(I,I + 1),ed(I,I + N),ed(I,I - N),genLatt(I - 1,J,N) if I > N and ((I rem N) == 1) and I < J - N .
+	ceq genLatt(I,J,N) =  ed(I,I - 1),ed(I,I + N),ed(I,I - N),genLatt(I - 1,J,N) if I > N and ((I rem N) == 0) and I < J - 1 .
+	ceq genLatt(I,J,N) =  dLatt(I,N),genLatt(I - 1,J,N)  if I < N and I > 1 .
+	ceq genLatt(I,J,N) =  uLatt(I,N),genLatt(I - 1,J,N)  if I > J - (N - 1) .
+	ceq genLatt(I,J,N) =  genLatt(I - 1,J,N) if I == N or I == J or I == J - (N - 1).
+	eq genLatt(I,J,N) = empty .
+	
+	op inLatt : Nat Nat -> Graph . 
+	eq inLatt(I,N) = ed(I,I + N),ed(I,I + 1),ed(I,I - 1),ed(I,I - N) .
+	op dLatt : Nat Nat -> Graph . 
+	eq dLatt(I,N) = ed(I,I + N),ed(I,I + 1),ed(I,I - 1) .
+	op uLatt : Nat Nat -> Graph . 
+	eq uLatt(I,N) = ed(I,I + 1),ed(I,I - 1),ed(I,I - N) .
+	
+	
+				
  crl [inte] : < G, LA, N >  => < G, update(G, LA), N - 1 > if N > 0 .
 
 endm
 
 
 ---(
-rew genWSG(auxWSG(2,15,15),auxWSG(2,15,15),2,15) .
+rew genWSG(auxWSG(2,100,100),auxWSG(2,100,100),2,100) . --- watts
+rew genBAG(1,baraGp, 2, 100) . 	--- barabasi
+rew genGraphs(100,1.0,100) . 	---complete
+rew genGraphs(100,0.2,100) . 	---erdos p = 0.2
 
 
-	rew < GRAFO, AL, 2 > .
+
+
+	rew < genGraphs(100,1.0,100), genAgents(100,10,4), 2 > .
 	rew mEdgeAdd(GRAFO,nodeEdge(GRAFO),5,2,empty) .
 	
 
